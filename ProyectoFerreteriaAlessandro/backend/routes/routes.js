@@ -1,94 +1,146 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const db = require('../models');
+const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
 
-//Prueba
+/**
+ * Ruta de prueba
+ * GET /api/test
+ */
 router.get('/test', (req, res) => {
-    res.json({ message: 'API is working!' });
+    res.json({ 
+        message: 'API Ferretería Alessandro funcionando correctamente!',
+        timestamp: new Date().toISOString()
+    });
 });
 
-// Obtener todos los usuarios
-router.get('/users', async (req, res) => {
+/**
+ * Ruta de prueba protegida
+ * GET /api/protected
+ * Requiere autenticación
+ */
+router.get('/protected', authenticateToken, (req, res) => {
+    res.json({ 
+        message: 'Acceso a ruta protegida exitoso',
+        usuario: req.user
+    });
+});
+
+/**
+ * Obtener todos los usuarios
+ * GET /api/usuarios
+ * Requiere autenticación
+ */
+router.get('/usuarios', authenticateToken, async (req, res) => {
     try {
-        const users = await User.findAll({
-            attributes: { exclude: ['password'] } // Excluir password de la respuesta
+        const usuarios = await db.Usuario.findAll({
+            attributes: { exclude: ['contrasena'] },
+            include: [
+                {
+                    model: db.Rol,
+                    as: 'rol',
+                    attributes: ['id_rol', 'nombre']
+                },
+                {
+                    model: db.Sucursal,
+                    as: 'sucursal',
+                    attributes: ['id_sucursal', 'nombre']
+                }
+            ]
         });
-        res.json(users);
+        res.json({ usuarios });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Registro de usuario
-router.post('/register', async (req, res) => {
+/**
+ * Obtener un usuario por ID
+ * GET /api/usuarios/:id
+ * Requiere autenticación
+ */
+router.get('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
-        const { name, email, password } = req.body;
-        
-        // Verificar si el usuario ya existe
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
-            return res.status(400).json({ error: 'El usuario ya existe' });
-        }
-        
-        // Hash del password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Crear usuario
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword
+        const usuario = await db.Usuario.findByPk(req.params.id, {
+            attributes: { exclude: ['contrasena'] },
+            include: [
+                {
+                    model: db.Rol,
+                    as: 'rol'
+                },
+                {
+                    model: db.Sucursal,
+                    as: 'sucursal'
+                }
+            ]
         });
-        
-        // Respuesta sin password
-        const userResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            isActive: user.isActive
-        };
-        
-        res.status(201).json({ user: userResponse, message: 'Usuario creado exitosamente' });
+
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.json({ usuario });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Login
-router.post('/login', async (req, res) => {
+/**
+ * Actualizar usuario
+ * PUT /api/usuarios/:id
+ * Requiere autenticación y rol de administrador (rol 1)
+ */
+router.put('/usuarios/:id', authenticateToken, authorizeRoles(1), async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { nombre, correo, id_rol, id_sucursal, activo } = req.body;
         
-        // Buscar usuario
-        const user = await User.findOne({ where: { email } });
-        if (!user) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
+        const usuario = await db.Usuario.findByPk(req.params.id);
+
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        
-        // Verificar password
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
+
+        await usuario.update({
+            nombre: nombre || usuario.nombre,
+            correo: correo || usuario.correo,
+            id_rol: id_rol || usuario.id_rol,
+            id_sucursal: id_sucursal !== undefined ? id_sucursal : usuario.id_sucursal,
+            activo: activo !== undefined ? activo : usuario.activo
+        });
+
+        const usuarioActualizado = await db.Usuario.findByPk(usuario.id_usuario, {
+            attributes: { exclude: ['contrasena'] },
+            include: [
+                { model: db.Rol, as: 'rol' },
+                { model: db.Sucursal, as: 'sucursal' }
+            ]
+        });
+
+        res.json({ 
+            message: 'Usuario actualizado exitosamente',
+            usuario: usuarioActualizado 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Desactivar usuario
+ * DELETE /api/usuarios/:id
+ * Requiere autenticación y rol de administrador (rol 1)
+ */
+router.delete('/usuarios/:id', authenticateToken, authorizeRoles(1), async (req, res) => {
+    try {
+        const usuario = await db.Usuario.findByPk(req.params.id);
+
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        
-        // Generar token JWT
-        const token = jwt.sign(
-            { userId: user.id, email: user.email },
-            process.env.JWT_SECRET || 'your-secret-key',
-            { expiresIn: '24h' }
-        );
-        
-        // Respuesta sin password
-        const userResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            isActive: user.isActive
-        };
-        
-        res.json({ user: userResponse, token, message: 'Login exitoso' });
+
+        await usuario.update({ activo: false });
+
+        res.json({ message: 'Usuario desactivado exitosamente' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
