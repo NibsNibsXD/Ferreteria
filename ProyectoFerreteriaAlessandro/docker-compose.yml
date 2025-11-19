@@ -18,6 +18,13 @@ services:
     container_name: ferreteria_alessandro_backend
     ports:
       - "${BACKEND_PORT}:3001"
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ferreteria_alessandro_db
+      DB_USER: postgres
+      DB_PASSWORD: clave123
+      NODE_ENV: development
     develop:
       watch:
         - action: sync
