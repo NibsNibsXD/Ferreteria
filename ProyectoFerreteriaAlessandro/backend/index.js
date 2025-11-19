@@ -2,15 +2,16 @@ require('dotenv').config(); // Carga variables de entorno
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
 // Importar configuración de Sequelize
 const { sequelize, testConnection } = require('./config/database');
 const db = require('./models');
 
-// Configuración de Express
+// Importar rutas
 const routes = require('./routes/routes');
+const authRoutes = require('./routes/authRoutes');
+
+// Configuración de Express
 const app = express();
 
 // Middlewares
@@ -18,8 +19,21 @@ app.use(cors());
 app.use(morgan('dev')); 
 app.use(express.json());
 
-// Aquí van las rutas
-app.use('/api', routes);
+// Rutas
+app.use('/api/auth', authRoutes); // Rutas de autenticación
+app.use('/api', routes); // Rutas generales
+
+// Ruta raíz
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'API Ferretería Alessandro',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      api: '/api'
+    }
+  });
+});
 
 const PORT = process.env.PORT || 3001;
 

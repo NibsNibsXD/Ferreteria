@@ -12,11 +12,13 @@ router.post('/register', async (req, res) => {
   try {
     const { nombre, correo, contrasena, id_rol, id_sucursal } = req.body;
 
+
     if (!nombre || !correo || !contrasena) {
       return res.status(400).json({ 
         error: 'Nombre, correo y contraseña son requeridos' 
       });
     }
+
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
@@ -41,7 +43,6 @@ router.post('/register', async (req, res) => {
         error: 'El correo ya está registrado' 
       });
     }
-
     const contrasenaEncriptada = await hashPassword(contrasena);
 
     const nuevoUsuario = await db.Usuario.create({
@@ -53,6 +54,7 @@ router.post('/register', async (req, res) => {
       estado: true,
       fecha_creacion: new Date()
     });
+
 
     const usuarioRespuesta = {
       id_usuario: nuevoUsuario.id_usuario,
