@@ -25,6 +25,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: clave123
       NODE_ENV: development
+      JWT_SECRET: ferreteria_alessandro_secret_key_2025
     develop:
       watch:
         - action: sync
