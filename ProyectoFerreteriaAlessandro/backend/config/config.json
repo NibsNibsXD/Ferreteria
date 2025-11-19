@@ -3,7 +3,7 @@
     "username": "postgres",
     "password": "clave123",
     "database": "ferreteria_alessandro_db",
-    "host": "127.0.0.1",
+    "host": "database",
     "port": 5432,
     "dialect": "postgres",
     "logging": false

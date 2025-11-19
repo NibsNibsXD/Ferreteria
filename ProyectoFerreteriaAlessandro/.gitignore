@@ -11,8 +11,7 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Migraciones y Seeders (no subir a GitHub)
-backend/migrations/
+# Seeders (no subir a GitHub)
 backend/seeders/
 
 # Logs
