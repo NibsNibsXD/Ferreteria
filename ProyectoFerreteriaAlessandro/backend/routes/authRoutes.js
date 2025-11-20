@@ -12,14 +12,14 @@ router.post('/register', async (req, res) => {
   try {
     const { nombre, correo, contrasena, id_rol, id_sucursal } = req.body;
 
-    // Validar datos requeridos
+
     if (!nombre || !correo || !contrasena) {
       return res.status(400).json({ 
         error: 'Nombre, correo y contraseña son requeridos' 
       });
     }
 
-    // Validar formato de correo
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
       return res.status(400).json({ 
@@ -27,7 +27,6 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Validar contraseña
     const passwordValidation = validatePassword(contrasena);
     if (!passwordValidation.isValid) {
       return res.status(400).json({ 
@@ -35,7 +34,6 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Verificar si el usuario ya existe
     const usuarioExistente = await db.Usuario.findOne({ 
       where: { correo } 
     });
@@ -45,30 +43,27 @@ router.post('/register', async (req, res) => {
         error: 'El correo ya está registrado' 
       });
     }
-
-    // Encriptar contraseña
     const contrasenaEncriptada = await hashPassword(contrasena);
 
-    // Crear usuario
     const nuevoUsuario = await db.Usuario.create({
       nombre,
       correo,
       contrasena: contrasenaEncriptada,
       id_rol: id_rol || 2, // Por defecto rol 2 (usuario)
       id_sucursal: id_sucursal || null,
-      activo: true,
-      fecha_registro: new Date()
+      estado: true,
+      fecha_creacion: new Date()
     });
 
-    // Responder sin la contraseña
+
     const usuarioRespuesta = {
       id_usuario: nuevoUsuario.id_usuario,
       nombre: nuevoUsuario.nombre,
       correo: nuevoUsuario.correo,
       id_rol: nuevoUsuario.id_rol,
       id_sucursal: nuevoUsuario.id_sucursal,
-      activo: nuevoUsuario.activo,
-      fecha_registro: nuevoUsuario.fecha_registro
+      estado: nuevoUsuario.estado,
+      fecha_creacion: nuevoUsuario.fecha_creacion
     };
 
     res.status(201).json({ 
@@ -123,7 +118,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Verificar si el usuario está activo
-    if (!usuario.activo) {
+    if (!usuario.estado) {
       return res.status(403).json({ 
         error: 'Usuario desactivado. Contacte al administrador.' 
       });
@@ -154,7 +149,7 @@ router.post('/login', async (req, res) => {
       correo: usuario.correo,
       id_rol: usuario.id_rol,
       id_sucursal: usuario.id_sucursal,
-      activo: usuario.activo,
+      estado: usuario.estado,
       rol: usuario.rol ? {
         id_rol: usuario.rol.id_rol,
         nombre: usuario.rol.nombre
