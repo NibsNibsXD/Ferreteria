@@ -10,6 +10,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
  */
 router.get('/', authenticateToken, cajaController.getAllCajas);
 
+
 /**
  * Obtener una caja por ID
  * GET /api/cajas/:id
