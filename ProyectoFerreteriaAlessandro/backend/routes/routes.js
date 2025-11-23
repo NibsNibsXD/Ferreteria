@@ -24,6 +24,8 @@ router.get('/test', (req, res) => {
 const rolesRoutes = require('./rol.routes');
 const sucursalesRoutes = require('./sucursal.routes');
 const usuariosRoutes = require('./usuario.routes');
+const cajasRoutes = require('./caja.routes');
+const cierresRoutes = require('./cierreCaja.routes');
 // const productosRoutes = require('./productos.routes');
 // const ventasRoutes = require('./ventas.routes');
 // const comprasRoutes = require('./compras.routes');
@@ -32,7 +34,8 @@ const usuariosRoutes = require('./usuario.routes');
 router.use('/roles', rolesRoutes);
 router.use('/sucursales', sucursalesRoutes);
 router.use('/usuarios', usuariosRoutes);
-// router.use('/productos', productosRoutes);
+router.use('/cajas', cajasRoutes);
+router.use('/cierres', cierresRoutes);
 // router.use('/productos', productosRoutes);
 // router.use('/ventas', ventasRoutes);
 // router.use('/compras', comprasRoutes);
