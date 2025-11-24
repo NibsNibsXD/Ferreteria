@@ -41,6 +41,7 @@ router.use('/usuarios', usuariosRoutes);
 router.use('/cajas', cajasRoutes);
 router.use('/cierres', cierresRoutes);
 router.use('/clientes', clientesRoutes);
+router.use('/categorias', categoriasRoutes);
 router.use('/facturas', facturasRoutes);
 router.use('/ventas', ventasRoutes);
 // router.use('/productos', productosRoutes);
