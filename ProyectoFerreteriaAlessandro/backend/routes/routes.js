@@ -28,9 +28,9 @@ const cajasRoutes = require('./caja.routes');
 const cierresRoutes = require('./cierreCaja.routes');
 const clientesRoutes = require('./cliente.routes');
 const categoriasRoutes = require('./categoria.routes');
+const comprasRoutes = require('./compras.routes');
 // const productosRoutes = require('./productos.routes');
 // const ventasRoutes = require('./ventas.routes');
-// const comprasRoutes = require('./compras.routes');
 
 // Montar rutas
 router.use('/roles', rolesRoutes);
@@ -40,8 +40,8 @@ router.use('/cajas', cajasRoutes);
 router.use('/cierres', cierresRoutes);
 router.use('/clientes', clientesRoutes);
 router.use('/categorias', categoriasRoutes);
+router.use('/compras', comprasRoutes);
 // router.use('/productos', productosRoutes);
 // router.use('/ventas', ventasRoutes);
-// router.use('/compras', comprasRoutes);
 
 module.exports = router;
