@@ -57,11 +57,4 @@ router.post('/', authenticateToken, authorizeRoles(1), ventaController.createVen
  */
 router.put('/:id', authenticateToken, authorizeRoles(1), ventaController.updateVenta);
 
-/**
- * Eliminar una venta
- * DELETE /api/ventas/:id
- * Requiere autenticación y rol de administrador
- */
-router.delete('/:id', authenticateToken, authorizeRoles(1), ventaController.deleteVenta);
-
 module.exports = router;

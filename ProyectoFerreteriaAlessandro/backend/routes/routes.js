@@ -37,9 +37,8 @@ const reportesRoutes = require('./reportes.routes');
 const facturasRoutes = require('./facturas.routes');
 
 const ventasRoutes = require('./ventas.routes');
-// const productosRoutes = require('./productos.routes');
-// const comprasRoutes = require('./compras.routes');
 const detallesCompraRoutes = require('./detallesCompra.routes');
+const alertasBajoStockRoutes = require('./alertasBajoStock.routes');
 
 // Montar rutas
 router.use('/roles', rolesRoutes);
@@ -57,8 +56,7 @@ router.use('/productos', productosRoutes);
 router.use('/reportes', reportesRoutes);
 router.use('/facturas', facturasRoutes);
 router.use('/ventas', ventasRoutes);
-// router.use('/productos', productosRoutes);
-// router.use('/compras', comprasRoutes);
 router.use('/detalles-compra', detallesCompraRoutes);
+router.use('/alertas', alertasBajoStockRoutes);
 
 module.exports = router;
