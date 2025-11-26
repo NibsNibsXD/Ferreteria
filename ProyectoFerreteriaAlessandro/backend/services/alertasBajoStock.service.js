@@ -32,21 +32,31 @@ const getCantConStockEnMinimo = async () => {
   }
 };
 
-const getAllProductsConStockMinimo = async () => {
+const getAllProductsConStockMinimo = async ({ limit } = {}) => {
   try {
-    const productos = await db.Producto.findAll({
+    // Buscar productos activos con stock <= stock_minimo
+    const options = {
       where: {
-        stock: {
-          [Op.lte]: db.Sequelize.col('stock_minimo')
-        },
-        activo: true
+        activo: true,
+        stock: { [Op.lte]: db.Sequelize.col('stock_minimo') }
       },
       include: [
-        { model: db.Categoria, as: 'categoria', attributes: ['id_categoria', 'nombre'] }
+        {
+          model: db.Categoria,
+          as: 'categoria',
+          attributes: ['id_categoria', 'nombre'],
+          required: false
+        }
       ],
       order: [['stock', 'ASC']]
-    });
-
+    };
+    if (limit) {
+      const limitNum = parseInt(limit);
+      if (limitNum > 0) {
+        options.limit = limitNum;
+      }
+    }
+    const productos = await db.Producto.findAll(options);
     const productosConEstado = productos.map(p => ({
       id_producto: p.id_producto,
       nombre: p.nombre,
@@ -54,10 +64,22 @@ const getAllProductsConStockMinimo = async () => {
       stock_minimo: p.stock_minimo,
       diferencia: p.stock_minimo - p.stock,
       estado: p.stock === 0 ? 'agotado' : 'bajo stock',
-      categoria: p.categoria
+      categoria: p.categoria ? {
+        id_categoria: p.categoria.id_categoria,
+        nombre: p.categoria.nombre
+      } : null
     }));
-
-    return productosConEstado;
+    // Contar el total sin limit
+    const cantidad = await db.Producto.count({
+      where: {
+        activo: true,
+        stock: { [Op.lte]: db.Sequelize.col('stock_minimo') }
+      }
+    });
+    return {
+      productos: productosConEstado,
+      cantidad
+    };
   } catch (error) {
     throw new Error(`Error al obtener productos con stock mínimo: ${error.message}`);
   }

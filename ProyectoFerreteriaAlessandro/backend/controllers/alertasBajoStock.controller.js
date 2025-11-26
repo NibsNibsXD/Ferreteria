@@ -32,10 +32,11 @@ const getCantConStockEnMinimo = async (req, res) => {
 
 const getAllProductsConStockMinimo = async (req, res) => {
   try {
-    const productos = await alertasService.getAllProductsConStockMinimo();
+    const { limit } = req.query;
+    const resultado = await alertasService.getAllProductsConStockMinimo({ limit });
     res.status(200).json({
       success: true,
-      data: productos
+      data: resultado
     });
   } catch (error) {
     res.status(500).json({
