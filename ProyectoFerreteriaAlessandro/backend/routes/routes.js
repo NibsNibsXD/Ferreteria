@@ -22,16 +22,41 @@ router.get('/test', (req, res) => {
 
 // Importar rutas de módulos específicos
 const rolesRoutes = require('./rol.routes');
-// const usuariosRoutes = require('./usuarios.routes');
+const sucursalesRoutes = require('./sucursal.routes');
+const usuariosRoutes = require('./usuario.routes');
+const cajasRoutes = require('./caja.routes');
+const cierresRoutes = require('./cierreCaja.routes');
+const clientesRoutes = require('./cliente.routes');
+const categoriasRoutes = require('./categoria.routes');
+const comprasRoutes = require('./compras.routes');
+const metodosPagoRoutes = require('./metodosPago.routes');
 // const productosRoutes = require('./productos.routes');
+const productosRoutes = require('./productos.routes');
 // const ventasRoutes = require('./ventas.routes');
-// const comprasRoutes = require('./compras.routes');
+const reportesRoutes = require('./reportes.routes');
+const facturasRoutes = require('./facturas.routes');
+
+const ventasRoutes = require('./ventas.routes');
+const detallesCompraRoutes = require('./detallesCompra.routes');
+const alertasBajoStockRoutes = require('./alertasBajoStock.routes');
 
 // Montar rutas
 router.use('/roles', rolesRoutes);
-// router.use('/usuarios', usuariosRoutes);
+router.use('/sucursales', sucursalesRoutes);
+router.use('/usuarios', usuariosRoutes);
+router.use('/cajas', cajasRoutes);
+router.use('/cierres', cierresRoutes);
+router.use('/clientes', clientesRoutes);
+router.use('/categorias', categoriasRoutes);
+router.use('/compras', comprasRoutes);
+router.use('/metodos-pago', metodosPagoRoutes);
 // router.use('/productos', productosRoutes);
+router.use('/productos', productosRoutes);
 // router.use('/ventas', ventasRoutes);
-// router.use('/compras', comprasRoutes);
+router.use('/reportes', reportesRoutes);
+router.use('/facturas', facturasRoutes);
+router.use('/ventas', ventasRoutes);
+router.use('/detalles-compra', detallesCompraRoutes);
+router.use('/alertas', alertasBajoStockRoutes);
 
 module.exports = router;
