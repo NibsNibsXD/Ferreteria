@@ -7,6 +7,8 @@ router.get('/productos-agotados', authenticateToken, alertasController.getCantPr
 
 router.get('/productos-stock-minimo', authenticateToken, alertasController.getCantConStockEnMinimo);
 
+
 router.get('/productos-bajo-stock', authenticateToken, alertasController.getAllProductsConStockMinimo);
+router.get('/productos-bajo-stock/excel', authenticateToken, alertasController.downloadExcelBajoStock);
 
 module.exports = router;

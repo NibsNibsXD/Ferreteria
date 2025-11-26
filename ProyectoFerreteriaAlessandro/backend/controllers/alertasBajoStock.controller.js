@@ -46,8 +46,24 @@ const getAllProductsConStockMinimo = async (req, res) => {
   }
 };
 
+
+const downloadExcelBajoStock = async (req, res) => {
+  try {
+    const buffer = await alertasService.getExcelProductosBajoStock();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="productos_bajo_stock.xlsx"');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getCantProductosAgotados,
   getCantConStockEnMinimo,
-  getAllProductsConStockMinimo
+  getAllProductsConStockMinimo,
+  downloadExcelBajoStock
 };
