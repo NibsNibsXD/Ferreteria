@@ -37,6 +37,14 @@ router.post('/', authenticateToken, ventaController.createVenta);
 router.get('/', authenticateToken, ventaController.getAllVentas);
 
 /**
+ * Obtener las últimas 10 ventas
+ * GET /api/ventas/last-10
+ * Requiere autenticación
+ * Retorna: id_factura, total, cliente, método de pago
+ */
+router.get('/last-10', authenticateToken, ventaController.getTheLast10Ventas);
+
+/**
  * Obtener cantidad de ventas
  * GET /api/ventas/count
  * Requiere autenticación
