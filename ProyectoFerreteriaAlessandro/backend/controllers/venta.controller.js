@@ -79,10 +79,30 @@ const updateVenta = async (req, res) => {
   }
 };
 
+/**
+ * Obtener cantidad de ventas
+ * GET /api/ventas/count
+ */
+const getVentasCount = async (req, res) => {
+  try {
+    const count = await ventaService.getVentasCount();
+    res.status(200).json({
+      success: true,
+      data: { count }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllVentas,
   getVentaById,
   createVenta,
-  updateVenta
+  updateVenta,
+  getVentasCount
 };
 
