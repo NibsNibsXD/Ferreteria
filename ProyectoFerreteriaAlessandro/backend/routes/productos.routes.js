@@ -12,6 +12,15 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
 router.get('/', authenticateToken, productoController.getAllProductos);
 
 /**
+ * Obtener todos los productos para inventario
+ * GET /api/productos/inventario/all
+ * Requiere autenticación
+ * Soporta paginación opcional: ?page=1&limit=10
+ * Retorna: nombre, código, categoría, precio_compra, precio_venta, stock, estado
+ */
+router.get('/inventario/all', authenticateToken, productoController.getAllProductosInventario);
+
+/**
  * Obtener los 10 productos con bajo stock
  * GET /api/productos/bajo-stock/list
  * Requiere autenticación
