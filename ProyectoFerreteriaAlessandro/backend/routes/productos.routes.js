@@ -12,6 +12,14 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
 router.get('/', authenticateToken, productoController.getAllProductos);
 
 /**
+ * Obtener los 10 productos con bajo stock
+ * GET /api/productos/bajo-stock/list
+ * Requiere autenticación
+ * Retorna: nombre_producto, categoría, cantidad, mínimo
+ */
+router.get('/bajo-stock/list', authenticateToken, productoController.getThe10ProductConBajoStock);
+
+/**
  * Obtener un producto por ID
  * GET /api/productos/:id
  * Requiere autenticación

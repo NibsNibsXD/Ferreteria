@@ -102,10 +102,30 @@ const deleteProducto = async (req, res) => {
   }
 };
 
+/**
+ * Obtener los 10 productos con bajo stock
+ * GET /api/productos/bajo-stock/list
+ */
+const getThe10ProductConBajoStock = async (req, res) => {
+  try {
+    const productos = await productoService.getThe10ProductConBajoStock();
+    res.status(200).json({
+      success: true,
+      data: productos
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
-  deleteProducto
+  deleteProducto,
+  getThe10ProductConBajoStock
 };
