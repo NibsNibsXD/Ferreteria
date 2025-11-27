@@ -283,9 +283,22 @@ const checkAndSendLowStockAlerts = async ({ productos, venta, req }) => {
   }
 };
 
+/**
+ * Obtener la cantidad total de ventas
+ */
+const getVentasCount = async () => {
+  try {
+    const count = await db.Venta.count();
+    return count;
+  } catch (error) {
+    throw new Error(`Error al obtener cantidad de ventas: ${error.message}`);
+  }
+};
+
 module.exports = {
   createVenta,
   checkAndSendLowStockAlerts,
   getAllVentas,
-  getVentaById
+  getVentaById,
+  getVentasCount
 };
