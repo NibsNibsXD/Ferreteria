@@ -194,10 +194,25 @@ const deleteProducto = async (id) => {
   }
 };
 
+/**
+ * Obtener la cantidad total de productos activos
+ */
+const getProductosActivosCount = async () => {
+  try {
+    const count = await db.Producto.count({
+      where: { activo: true }
+    });
+    return count;
+  } catch (error) {
+    throw new Error(`Error al obtener cantidad de productos activos: ${error.message}`);
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
-  deleteProducto
+  deleteProducto,
+  getProductosActivosCount
 };

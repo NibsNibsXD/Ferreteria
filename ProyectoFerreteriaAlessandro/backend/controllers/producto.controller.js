@@ -102,10 +102,30 @@ const deleteProducto = async (req, res) => {
   }
 };
 
+/**
+ * Obtener cantidad de productos activos
+ * GET /api/productos/activos/count
+ */
+const getProductosActivosCount = async (req, res) => {
+  try {
+    const count = await productoService.getProductosActivosCount();
+    res.status(200).json({
+      success: true,
+      data: { count }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
-  deleteProducto
+  deleteProducto,
+  getProductosActivosCount
 };
