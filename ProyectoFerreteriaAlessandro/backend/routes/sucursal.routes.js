@@ -82,7 +82,6 @@ router.get('/', authenticateToken, sucursalController.getAllSucursales);
  */
 router.get('/:id', authenticateToken, sucursalController.getSucursalById);
 
-
 /**
  * @swagger
  * /api/sucursales:
