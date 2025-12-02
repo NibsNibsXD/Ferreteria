@@ -37,6 +37,13 @@ router.post('/', authenticateToken, ventaController.createVenta);
 router.get('/', authenticateToken, ventaController.getAllVentas);
 
 /**
+ * Obtener cantidad de ventas
+ * GET /api/ventas/count
+ * Requiere autenticación
+ */
+router.get('/count', authenticateToken, ventaController.getVentasCount);
+
+/**
  * Obtener una venta por ID
  * GET /api/ventas/:id
  * Requiere autenticación

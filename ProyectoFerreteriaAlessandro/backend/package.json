@@ -14,7 +14,12 @@
     "db:create": "sequelize db:create",
     "db:drop": "sequelize db:drop"
   },
-  "keywords": ["ferreteria", "alessandro", "api", "postgres"],
+  "keywords": [
+    "ferreteria",
+    "alessandro",
+    "api",
+    "postgres"
+  ],
   "author": "Alessandro",
   "license": "ISC",
   "dependencies": {
@@ -31,6 +36,8 @@
     "pg": "^8.16.2",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.0",
-    "sequelize-cli": "^6.6.2"
+    "sequelize-cli": "^6.6.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   }
 }
