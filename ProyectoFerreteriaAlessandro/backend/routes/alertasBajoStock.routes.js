@@ -4,9 +4,10 @@ const alertasController = require('../controllers/alertasBajoStock.controller');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 
+
 /**
  * @swagger
- * /alertas/productos-agotados:
+ * /api/alertas/productos-agotados:
  *   get:
  *     summary: Obtener cantidad de productos agotados
  *     tags:
@@ -31,6 +32,32 @@ const { authenticateToken } = require('../middleware/authMiddleware');
  */
 router.get('/productos-agotados', authenticateToken, alertasController.getCantProductosAgotados);
 
+
+/**
+ * @swagger
+ * /api/alertas/productos-stock-minimo:
+ *   get:
+ *     summary: Obtener cantidad de productos con stock en mínimo
+ *     tags:
+ *       - Alertas Bajo Stock
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cantidad de productos con stock en mínimo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cantidad:
+ *                       type: integer
+ */
 router.get('/productos-stock-minimo', authenticateToken, alertasController.getCantConStockEnMinimo);
 
 router.get('/productos-bajo-stock', authenticateToken, alertasController.getAllProductsConStockMinimo);
