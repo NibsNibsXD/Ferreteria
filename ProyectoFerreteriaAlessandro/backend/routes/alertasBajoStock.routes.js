@@ -6,7 +6,7 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 
 /**
  * @swagger
- * /alertas/productos-agotados:
+ * /api/alertas/productos-agotados:
  *   get:
  *     summary: Obtener cantidad de productos agotados
  *     tags:
@@ -33,6 +33,42 @@ router.get('/productos-agotados', authenticateToken, alertasController.getCantPr
 
 router.get('/productos-stock-minimo', authenticateToken, alertasController.getCantConStockEnMinimo);
 
+
+/**
+ * @swagger
+ * /api/alertas/productos-bajo-stock:
+ *   get:
+ *     summary: Obtener todos los productos con stock en mínimo
+ *     tags:
+ *       - Alertas Bajo Stock
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de productos con stock en mínimo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       nombre:
+ *                         type: string
+ *                       stock:
+ *                         type: integer
+ *                       stockMinimo:
+ *                         type: integer
+ *                       categoria:
+ *                         type: string
+ */
 router.get('/productos-bajo-stock', authenticateToken, alertasController.getAllProductsConStockMinimo);
 
 module.exports = router;
