@@ -208,11 +208,57 @@ const getProductosActivosCount = async () => {
   }
 };
 
+/**
+ * Obtener los 10 productos con bajo stock
+ * Retorna nombre_producto, categoría, cantidad (stock), mínimo (stock_minimo)
+ */
+const getThe10ProductConBajoStock = async () => {
+  try {
+    const productos = await db.Producto.findAll({
+      where: {
+        [db.Sequelize.Op.or]: [
+          db.Sequelize.where(
+            db.Sequelize.col('stock'),
+            '<=',
+            db.Sequelize.col('stock_minimo')
+          )
+        ]
+      },
+      limit: 10,
+      order: [
+        [db.Sequelize.literal('stock - stock_minimo'), 'ASC']
+      ],
+      attributes: ['id_producto', 'nombre', 'stock', 'stock_minimo'],
+      include: [
+        {
+          model: db.Categoria,
+          as: 'categoria',
+          attributes: ['id_categoria', 'nombre']
+        }
+      ]
+    });
+
+    // Formatear la respuesta
+    const productosFormateados = productos.map(producto => ({
+      id_producto: producto.id_producto,
+      nombre_producto: producto.nombre,
+      categoria: producto.categoria ? producto.categoria.nombre : 'Sin categoría',
+      cantidad: parseInt(producto.stock),
+      minimo: parseInt(producto.stock_minimo)
+    }));
+
+    return productosFormateados;
+  } catch (error) {
+    throw new Error(`Error al obtener productos con bajo stock: ${error.message}`);
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
   deleteProducto,
-  getProductosActivosCount
+  getProductosActivosCount,
+  getThe10ProductConBajoStock
 };
