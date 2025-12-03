@@ -208,11 +208,34 @@ const getProductosActivosCount = async () => {
   }
 };
 
+/**
+ * Obtener el valor total del inventario (suma del precio_compra * stock)
+ */
+const getValorInventario = async () => {
+  try {
+    const productos = await db.Producto.findAll({
+      attributes: ['precio_compra', 'stock'],
+      where: { activo: true }
+    });
+
+    const valorTotal = productos.reduce((total, producto) => {
+      const precioCompra = parseFloat(producto.precio_compra) || 0;
+      const stock = parseInt(producto.stock) || 0;
+      return total + (precioCompra * stock);
+    }, 0);
+
+    return valorTotal;
+  } catch (error) {
+    throw new Error(`Error al obtener valor del inventario: ${error.message}`);
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
   deleteProducto,
-  getProductosActivosCount
+  getProductosActivosCount,
+  getValorInventario
 };

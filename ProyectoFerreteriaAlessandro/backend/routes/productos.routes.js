@@ -19,6 +19,13 @@ router.get('/', authenticateToken, productoController.getAllProductos);
 router.get('/activos/count', authenticateToken, productoController.getProductosActivosCount);
 
 /**
+ * Obtener valor total del inventario
+ * GET /api/productos/inventario/valor
+ * Requiere autenticación
+ */
+router.get('/inventario/valor', authenticateToken, productoController.getValorInventario);
+
+/**
  * Obtener un producto por ID
  * GET /api/productos/:id
  * Requiere autenticación

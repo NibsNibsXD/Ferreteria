@@ -121,11 +121,31 @@ const getProductosActivosCount = async (req, res) => {
   }
 };
 
+/**
+ * Obtener valor total del inventario
+ * GET /api/productos/inventario/valor
+ */
+const getValorInventario = async (req, res) => {
+  try {
+    const valor = await productoService.getValorInventario();
+    res.status(200).json({
+      success: true,
+      data: { valor }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
   deleteProducto,
-  getProductosActivosCount
+  getProductosActivosCount,
+  getValorInventario
 };
