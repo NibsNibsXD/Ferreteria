@@ -178,6 +178,27 @@ const getThe10ProductConBajoStock = async (req, res) => {
   }
 };
 
+/**
+ * Obtener todos los productos para inventario
+ * GET /api/productos/inventario/all
+ * Soporta paginación opcional mediante query params: ?page=1&limit=10
+ */
+const getAllProductosInventario = async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+    const productos = await productoService.getAllProductosInventario({ page, limit });
+    res.status(200).json({
+      success: true,
+      data: productos
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
@@ -187,5 +208,6 @@ module.exports = {
   getProductosActivosCount,
   getValorInventario,
   getProductosBajoStockCount,
-  getThe10ProductConBajoStock
+  getThe10ProductConBajoStock,
+  getAllProductosInventario
 };
