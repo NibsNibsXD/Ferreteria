@@ -195,8 +195,7 @@ const deleteProducto = async (id) => {
 };
 
 /**
- * Obtener cantidad de productos activos
- * Retorna la cantidad de productos donde activo = true
+ * Obtener la cantidad total de productos activos
  */
 const getProductosActivosCount = async () => {
   try {
@@ -205,56 +204,13 @@ const getProductosActivosCount = async () => {
     });
     return count;
   } catch (error) {
-    throw new Error(`Error al obtener productos activos: ${error.message}`);
-  }
-};
-
-/**
- * Obtener valor total del inventario
- * Suma el precio_compra * stock de todos los productos
- */
-const getValorInventario = async () => {
-  try {
-    const productos = await db.Producto.findAll({
-      attributes: ['precio_compra', 'stock']
-    });
-    
-    const valorTotal = productos.reduce((total, producto) => {
-      return total + (parseFloat(producto.precio_compra) * parseInt(producto.stock));
-    }, 0);
-    
-    return valorTotal;
-  } catch (error) {
-    throw new Error(`Error al calcular valor de inventario: ${error.message}`);
-  }
-};
-
-/**
- * Obtener cantidad de productos con bajo stock
- * Retorna la cantidad de productos donde stock <= stock_minimo
- */
-const getProductosBajoStockCount = async () => {
-  try {
-    const count = await db.Producto.count({
-      where: {
-        [db.Sequelize.Op.or]: [
-          db.Sequelize.where(
-            db.Sequelize.col('stock'),
-            '<=',
-            db.Sequelize.col('stock_minimo')
-          )
-        ]
-      }
-    });
-    return count;
-  } catch (error) {
-    throw new Error(`Error al obtener productos con bajo stock: ${error.message}`);
+    throw new Error(`Error al obtener cantidad de productos activos: ${error.message}`);
   }
 };
 
 /**
  * Obtener los 10 productos con bajo stock
- * Retorna nombre, categoría, cantidad actual y stock mínimo
+ * Retorna: nombre_producto, categoría, cantidad (stock), mínimo (stock_minimo)
  */
 const getThe10ProductConBajoStock = async () => {
   try {
@@ -304,7 +260,5 @@ module.exports = {
   updateProducto,
   deleteProducto,
   getProductosActivosCount,
-  getValorInventario,
-  getProductosBajoStockCount,
   getThe10ProductConBajoStock
 };

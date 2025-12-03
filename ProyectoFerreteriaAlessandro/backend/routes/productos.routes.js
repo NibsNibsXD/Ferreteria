@@ -19,20 +19,6 @@ router.get('/', authenticateToken, productoController.getAllProductos);
 router.get('/activos/count', authenticateToken, productoController.getProductosActivosCount);
 
 /**
- * Obtener valor total del inventario
- * GET /api/productos/inventario/valor
- * Requiere autenticación
- */
-router.get('/inventario/valor', authenticateToken, productoController.getValorInventario);
-
-/**
- * Obtener cantidad de productos con bajo stock
- * GET /api/productos/bajo-stock/count
- * Requiere autenticación
- */
-router.get('/bajo-stock/count', authenticateToken, productoController.getProductosBajoStockCount);
-
-/**
  * Obtener los 10 productos con bajo stock
  * GET /api/productos/bajo-stock/list
  * Requiere autenticación
