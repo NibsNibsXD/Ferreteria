@@ -154,6 +154,9 @@ const createVenta = async (data, req = null) => {
     return ventaCompleta;
   } catch (error) {
     await transaction.rollback();
+    throw error;
+  }
+};
 
 /**
  * Obtener todas las ventas
@@ -281,69 +284,20 @@ const checkAndSendLowStockAlerts = async ({ productos, venta, req }) => {
 };
 
 /**
- * Obtener todas las ventas
- * @param {Object} options - Opciones de paginación
- * @returns {Promise<Array>} - Lista de ventas
+ * Obtener las últimas 10 ventas
+ * Retorna id_factura, total, cliente y método de pago
  */
-const getAllVentas = async ({ page, limit } = {}) => {
+const getTheLast10Ventas = async () => {
   try {
-    const options = {
+    const ventas = await db.Venta.findAll({
+      limit: 10,
+      order: [['fecha', 'DESC']],
+      attributes: ['id_venta', 'codigo_factura', 'total', 'fecha'],
       include: [
-        {
-          model: db.Usuario,
-          as: 'usuario',
-          attributes: ['id_usuario', 'nombre', 'apellido']
-        },
         {
           model: db.Cliente,
           as: 'cliente',
-          attributes: ['id_cliente', 'nombre', 'apellido', 'telefono']
-        },
-        {
-          model: db.MetodoPago,
-          as: 'metodo_pago',
-          attributes: ['id_metodo_pago', 'nombre']
-        }
-      ],
-      order: [['fecha', 'DESC']]
-    };
-
-    // Si se proporcionan page y limit, aplicar paginación
-    if (page && limit) {
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
-
-      if (pageNum > 0 && limitNum > 0) {
-        options.offset = (pageNum - 1) * limitNum;
-        options.limit = limitNum;
-      }
-    }
-
-    const ventas = await db.Venta.findAll(options);
-    return ventas;
-  } catch (error) {
-    throw new Error(`Error al obtener ventas: ${error.message}`);
-  }
-};
-
-/**
- * Obtener una venta por ID
- * @param {number} id - ID de la venta
- * @returns {Promise<Object>} - Venta encontrada
- */
-const getVentaById = async (id) => {
-  try {
-    const venta = await db.Venta.findByPk(id, {
-      include: [
-        {
-          model: db.Usuario,
-          as: 'usuario',
-          attributes: ['id_usuario', 'nombre', 'apellido', 'correo']
-        },
-        {
-          model: db.Cliente,
-          as: 'cliente',
-          attributes: ['id_cliente', 'nombre', 'apellido', 'telefono', 'correo']
+          attributes: ['id_cliente', 'nombre', 'apellido']
         },
         {
           model: db.MetodoPago,
@@ -353,126 +307,31 @@ const getVentaById = async (id) => {
         {
           model: db.Factura,
           as: 'factura',
-          include: [
-            {
-              model: db.DetalleFactura,
-              as: 'detalles',
-              include: [
-                {
-                  model: db.Producto,
-                  as: 'producto',
-                  attributes: ['id_producto', 'nombre', 'codigo_barra', 'precio_venta', 'stock']
-                }
-              ]
-            }
-          ]
+          attributes: ['id_factura', 'numero_factura']
         }
       ]
     });
- * Crear una nueva venta
- */
-const createVenta = async (data) => {
-  try {
-    const { codigo_factura, id_usuario, id_cliente, id_metodo_pago, total, fecha, estado } = data;
 
-    // Validaciones básicas
-    if (!codigo_factura || codigo_factura.trim() === '') {
-      throw new Error('El código de factura es requerido');
-    }
+    // Formatear la respuesta
+    const ventasFormateadas = ventas.map(venta => ({
+      id_venta: venta.id_venta,
+      id_factura: venta.factura ? venta.factura.id_factura : null,
+      numero_factura: venta.factura ? venta.factura.numero_factura : venta.codigo_factura,
+      total: parseFloat(venta.total),
+      fecha: venta.fecha,
+      cliente: venta.cliente ? {
+        id: venta.cliente.id_cliente,
+        nombre_completo: `${venta.cliente.nombre} ${venta.cliente.apellido}`
+      } : null,
+      metodo_pago: venta.metodo_pago ? {
+        id: venta.metodo_pago.id_metodo_pago,
+        nombre: venta.metodo_pago.nombre
+      } : null
+    }));
 
-    if (!id_metodo_pago) {
-      throw new Error('El método de pago es requerido');
-    }
-
-    if (total === undefined || total === null || total < 0) {
-      throw new Error('El total de la venta es requerido y debe ser mayor o igual a 0');
-    }
-
-    // Verificar si ya existe una venta con ese código de factura
-    const ventaExistente = await db.Venta.findOne({
-      where: { codigo_factura: codigo_factura.trim() }
-    });
-
-    if (ventaExistente) {
-      throw new Error('Ya existe una venta con ese código de factura');
-    }
-
-    const nuevaVenta = await db.Venta.create({
-      codigo_factura: codigo_factura.trim(),
-      id_usuario: id_usuario || null,
-      id_cliente: id_cliente || null,
-      id_metodo_pago,
-      total,
-      fecha: fecha || new Date(),
-      estado: estado || 'completada'
-    });
-
-    // Retornar la venta con sus relaciones
-    const ventaCompleta = await getVentaById(nuevaVenta.id_venta);
-    return ventaCompleta;
+    return ventasFormateadas;
   } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Actualizar una venta
- */
-const updateVenta = async (id, data) => {
-  try {
-    const venta = await db.Venta.findByPk(id);
-
-    if (!venta) {
-      throw new Error('Venta no encontrada');
-    }
-
-    const { codigo_factura, id_usuario, id_cliente, id_metodo_pago, total, fecha, estado } = data;
-
-    // Si se está actualizando el código de factura, verificar que no exista otra venta con ese código
-    if (codigo_factura && codigo_factura.trim() !== venta.codigo_factura) {
-      const ventaExistente = await db.Venta.findOne({
-        where: { codigo_factura: codigo_factura.trim() }
-      });
-
-      if (ventaExistente) {
-        throw new Error('Ya existe una venta con ese código de factura');
-      }
-    }
-
-    await venta.update({
-      codigo_factura: codigo_factura ? codigo_factura.trim() : venta.codigo_factura,
-      id_usuario: id_usuario !== undefined ? id_usuario : venta.id_usuario,
-      id_cliente: id_cliente !== undefined ? id_cliente : venta.id_cliente,
-      id_metodo_pago: id_metodo_pago !== undefined ? id_metodo_pago : venta.id_metodo_pago,
-      total: total !== undefined ? total : venta.total,
-      fecha: fecha !== undefined ? fecha : venta.fecha,
-      estado: estado !== undefined ? estado : venta.estado
-    });
-
-    // Retornar la venta actualizada con sus relaciones
-    const ventaActualizada = await getVentaById(venta.id_venta);
-    return ventaActualizada;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Eliminar una venta
- */
-const deleteVenta = async (id) => {
-  try {
-    const venta = await db.Venta.findByPk(id);
-
-    if (!venta) {
-      throw new Error('Venta no encontrada');
-    }
-
-    return venta;
-    await venta.destroy();
-    return { message: 'Venta eliminada exitosamente' };
-  } catch (error) {
-    throw error;
+    throw new Error(`Error al obtener las últimas 10 ventas: ${error.message}`);
   }
 };
 
@@ -480,10 +339,6 @@ module.exports = {
   createVenta,
   checkAndSendLowStockAlerts,
   getAllVentas,
-  getVentaById
-  getAllVentas,
   getVentaById,
-  createVenta,
-  updateVenta,
-  deleteVenta
+  getTheLast10Ventas
 };
