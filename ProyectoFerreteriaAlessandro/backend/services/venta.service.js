@@ -284,14 +284,54 @@ const checkAndSendLowStockAlerts = async ({ productos, venta, req }) => {
 };
 
 /**
- * Obtener la cantidad total de ventas
+ * Obtener las últimas 10 ventas
+ * Retorna id_factura, total, cliente y método de pago
  */
-const getVentasCount = async () => {
+const getTheLast10Ventas = async () => {
   try {
-    const count = await db.Venta.count();
-    return count;
+    const ventas = await db.Venta.findAll({
+      limit: 10,
+      order: [['fecha', 'DESC']],
+      attributes: ['id_venta', 'codigo_factura', 'total', 'fecha'],
+      include: [
+        {
+          model: db.Cliente,
+          as: 'cliente',
+          attributes: ['id_cliente', 'nombre', 'apellido']
+        },
+        {
+          model: db.MetodoPago,
+          as: 'metodo_pago',
+          attributes: ['id_metodo_pago', 'nombre']
+        },
+        {
+          model: db.Factura,
+          as: 'factura',
+          attributes: ['id_factura', 'numero_factura']
+        }
+      ]
+    });
+
+    // Formatear la respuesta
+    const ventasFormateadas = ventas.map(venta => ({
+      id_venta: venta.id_venta,
+      id_factura: venta.factura ? venta.factura.id_factura : null,
+      numero_factura: venta.factura ? venta.factura.numero_factura : venta.codigo_factura,
+      total: parseFloat(venta.total),
+      fecha: venta.fecha,
+      cliente: venta.cliente ? {
+        id: venta.cliente.id_cliente,
+        nombre_completo: `${venta.cliente.nombre} ${venta.cliente.apellido}`
+      } : null,
+      metodo_pago: venta.metodo_pago ? {
+        id: venta.metodo_pago.id_metodo_pago,
+        nombre: venta.metodo_pago.nombre
+      } : null
+    }));
+
+    return ventasFormateadas;
   } catch (error) {
-    throw new Error(`Error al obtener cantidad de ventas: ${error.message}`);
+    throw new Error(`Error al obtener las últimas 10 ventas: ${error.message}`);
   }
 };
 
@@ -300,5 +340,5 @@ module.exports = {
   checkAndSendLowStockAlerts,
   getAllVentas,
   getVentaById,
-  getVentasCount
+  getTheLast10Ventas
 };
