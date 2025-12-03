@@ -60,7 +60,7 @@ const createProducto = async (req, res) => {
     });
   }
 };
-
+//testing comit
 /**
  * Actualizar un producto
  * PUT /api/productos/:id
@@ -121,71 +121,11 @@ const getProductosActivosCount = async (req, res) => {
   }
 };
 
-/**
- * Obtener valor total del inventario
- * GET /api/productos/inventario/valor
- */
-const getValorInventario = async (req, res) => {
-  try {
-    const valorTotal = await productoService.getValorInventario();
-    res.status(200).json({
-      success: true,
-      data: { valorTotal }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
-
-/**
- * Obtener cantidad de productos con bajo stock
- * GET /api/productos/bajo-stock/count
- */
-const getProductosBajoStockCount = async (req, res) => {
-  try {
-    const count = await productoService.getProductosBajoStockCount();
-    res.status(200).json({
-      success: true,
-      data: { count }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
-
-/**
- * Obtener los 10 productos con bajo stock
- * GET /api/productos/bajo-stock/list
- */
-const getThe10ProductConBajoStock = async (req, res) => {
-  try {
-    const productos = await productoService.getThe10ProductConBajoStock();
-    res.status(200).json({
-      success: true,
-      data: productos
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
-
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
   deleteProducto,
-  getProductosActivosCount,
-  getValorInventario,
-  getProductosBajoStockCount,
-  getThe10ProductConBajoStock
+  getProductosActivosCount
 };
