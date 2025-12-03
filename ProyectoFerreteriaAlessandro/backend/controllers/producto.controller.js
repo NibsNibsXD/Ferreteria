@@ -127,10 +127,29 @@ const getProductosActivosCount = async (req, res) => {
  */
 const getValorInventario = async (req, res) => {
   try {
-    const valor = await productoService.getValorInventario();
+    const valorTotal = await productoService.getValorInventario();
     res.status(200).json({
       success: true,
-      data: { valor }
+      data: { valorTotal }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Obtener cantidad de productos con bajo stock
+ * GET /api/productos/bajo-stock/count
+ */
+const getProductosBajoStockCount = async (req, res) => {
+  try {
+    const count = await productoService.getProductosBajoStockCount();
+    res.status(200).json({
+      success: true,
+      data: { count }
     });
   } catch (error) {
     res.status(500).json({
@@ -147,5 +166,6 @@ module.exports = {
   updateProducto,
   deleteProducto,
   getProductosActivosCount,
-  getValorInventario
+  getValorInventario,
+  getProductosBajoStockCount
 };
