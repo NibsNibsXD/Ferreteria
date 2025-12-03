@@ -297,6 +297,63 @@ const getThe10ProductConBajoStock = async () => {
   }
 };
 
+/**
+ * Obtener todos los productos para inventario
+ * Retorna: nombre, código, categoría, precio_compra, precio_venta, stock, estado
+ */
+const getAllProductosInventario = async ({ page, limit } = {}) => {
+  try {
+    const options = {
+      attributes: [
+        'id_producto',
+        'nombre',
+        'codigo_barra',
+        'precio_compra',
+        'precio_venta',
+        'stock',
+        'activo'
+      ],
+      include: [
+        {
+          model: db.Categoria,
+          as: 'categoria',
+          attributes: ['id_categoria', 'nombre']
+        }
+      ],
+      order: [['id_producto', 'ASC']]
+    };
+
+    // Si se proporcionan page y limit, aplicar paginación
+    if (page && limit) {
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+
+      if (pageNum > 0 && limitNum > 0) {
+        options.offset = (pageNum - 1) * limitNum;
+        options.limit = limitNum;
+      }
+    }
+
+    const productos = await db.Producto.findAll(options);
+
+    // Formatear la respuesta
+    const productosFormateados = productos.map(producto => ({
+      id_producto: producto.id_producto,
+      nombre: producto.nombre,
+      codigo: producto.codigo_barra || 'N/A',
+      categoria: producto.categoria ? producto.categoria.nombre : 'Sin categoría',
+      compra: parseFloat(producto.precio_compra),
+      venta: parseFloat(producto.precio_venta),
+      stock: parseInt(producto.stock),
+      estado: producto.activo ? 'Activo' : 'Inactivo'
+    }));
+
+    return productosFormateados;
+  } catch (error) {
+    throw new Error(`Error al obtener inventario de productos: ${error.message}`);
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
@@ -306,5 +363,6 @@ module.exports = {
   getProductosActivosCount,
   getValorInventario,
   getProductosBajoStockCount,
-  getThe10ProductConBajoStock
+  getThe10ProductConBajoStock,
+  getAllProductosInventario
 };

@@ -26,6 +26,15 @@ router.get('/activos/count', authenticateToken, productoController.getProductosA
 router.get('/inventario/valor', authenticateToken, productoController.getValorInventario);
 
 /**
+ * Obtener todos los productos para inventario
+ * GET /api/productos/inventario/all
+ * Requiere autenticación
+ * Soporta paginación opcional: ?page=1&limit=10
+ * Retorna: nombre, código, categoría, precio_compra, precio_venta, stock, estado
+ */
+router.get('/inventario/all', authenticateToken, productoController.getAllProductosInventario);
+
+/**
  * Obtener cantidad de productos con bajo stock
  * GET /api/productos/bajo-stock/count
  * Requiere autenticación
