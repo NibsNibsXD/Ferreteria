@@ -194,10 +194,175 @@ const deleteProducto = async (id) => {
   }
 };
 
+/**
+ * Obtener cantidad de productos activos
+ * Retorna la cantidad de productos donde activo = true
+ */
+const getProductosActivosCount = async () => {
+  try {
+    const count = await db.Producto.count({
+      where: { activo: true }
+    });
+    return count;
+  } catch (error) {
+    throw new Error(`Error al obtener productos activos: ${error.message}`);
+  }
+};
+
+/**
+ * Obtener valor total del inventario
+ * Suma el precio_compra * stock de todos los productos
+ */
+const getValorInventario = async () => {
+  try {
+    const productos = await db.Producto.findAll({
+      attributes: ['precio_compra', 'stock']
+    });
+    
+    const valorTotal = productos.reduce((total, producto) => {
+      return total + (parseFloat(producto.precio_compra) * parseInt(producto.stock));
+    }, 0);
+    
+    return valorTotal;
+  } catch (error) {
+    throw new Error(`Error al calcular valor de inventario: ${error.message}`);
+  }
+};
+
+/**
+ * Obtener cantidad de productos con bajo stock
+ * Retorna la cantidad de productos donde stock <= stock_minimo
+ */
+const getProductosBajoStockCount = async () => {
+  try {
+    const count = await db.Producto.count({
+      where: {
+        [db.Sequelize.Op.or]: [
+          db.Sequelize.where(
+            db.Sequelize.col('stock'),
+            '<=',
+            db.Sequelize.col('stock_minimo')
+          )
+        ]
+      }
+    });
+    return count;
+  } catch (error) {
+    throw new Error(`Error al obtener productos con bajo stock: ${error.message}`);
+  }
+};
+
+/**
+ * Obtener los 10 productos con bajo stock
+ * Retorna nombre, categoría, cantidad actual y stock mínimo
+ */
+const getThe10ProductConBajoStock = async () => {
+  try {
+    const productos = await db.Producto.findAll({
+      where: {
+        [db.Sequelize.Op.or]: [
+          db.Sequelize.where(
+            db.Sequelize.col('stock'),
+            '<=',
+            db.Sequelize.col('stock_minimo')
+          )
+        ]
+      },
+      limit: 10,
+      order: [
+        [db.Sequelize.literal('stock - stock_minimo'), 'ASC']
+      ],
+      attributes: ['id_producto', 'nombre', 'stock', 'stock_minimo'],
+      include: [
+        {
+          model: db.Categoria,
+          as: 'categoria',
+          attributes: ['id_categoria', 'nombre']
+        }
+      ]
+    });
+
+    // Formatear la respuesta
+    const productosFormateados = productos.map(producto => ({
+      id_producto: producto.id_producto,
+      nombre_producto: producto.nombre,
+      categoria: producto.categoria ? producto.categoria.nombre : 'Sin categoría',
+      cantidad: parseInt(producto.stock),
+      minimo: parseInt(producto.stock_minimo)
+    }));
+
+    return productosFormateados;
+  } catch (error) {
+    throw new Error(`Error al obtener productos con bajo stock: ${error.message}`);
+  }
+};
+
+/**
+ * Obtener todos los productos para inventario
+ * Retorna: nombre, código, categoría, precio_compra, precio_venta, stock, estado
+ */
+const getAllProductosInventario = async ({ page, limit } = {}) => {
+  try {
+    const options = {
+      attributes: [
+        'id_producto',
+        'nombre',
+        'codigo_barra',
+        'precio_compra',
+        'precio_venta',
+        'stock',
+        'activo'
+      ],
+      include: [
+        {
+          model: db.Categoria,
+          as: 'categoria',
+          attributes: ['id_categoria', 'nombre']
+        }
+      ],
+      order: [['id_producto', 'ASC']]
+    };
+
+    // Si se proporcionan page y limit, aplicar paginación
+    if (page && limit) {
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+
+      if (pageNum > 0 && limitNum > 0) {
+        options.offset = (pageNum - 1) * limitNum;
+        options.limit = limitNum;
+      }
+    }
+
+    const productos = await db.Producto.findAll(options);
+
+    // Formatear la respuesta
+    const productosFormateados = productos.map(producto => ({
+      id_producto: producto.id_producto,
+      nombre: producto.nombre,
+      codigo: producto.codigo_barra || 'N/A',
+      categoria: producto.categoria ? producto.categoria.nombre : 'Sin categoría',
+      compra: parseFloat(producto.precio_compra),
+      venta: parseFloat(producto.precio_venta),
+      stock: parseInt(producto.stock),
+      estado: producto.activo ? 'Activo' : 'Inactivo'
+    }));
+
+    return productosFormateados;
+  } catch (error) {
+    throw new Error(`Error al obtener inventario de productos: ${error.message}`);
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
   createProducto,
   updateProducto,
-  deleteProducto
+  deleteProducto,
+  getProductosActivosCount,
+  getValorInventario,
+  getProductosBajoStockCount,
+  getThe10ProductConBajoStock,
+  getAllProductosInventario
 };

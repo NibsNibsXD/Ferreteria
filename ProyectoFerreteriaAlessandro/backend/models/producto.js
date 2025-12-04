@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   
+  //aqui ya esta implemenetado 104-routes-editproduct
   Producto.init({
     id_producto: {
       type: DataTypes.INTEGER,
