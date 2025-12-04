@@ -8,6 +8,8 @@ const swaggerJsdoc = require('swagger-jsdoc');
  * Módulo: Ventas
  * Configuración de Swagger/OpenAPI 3.0 para API Ferretería Alessandro
  * Módulo: Compras
+ * Configuración de Swagger/OpenAPI 3.0 para API Ferretería Alessandro
+ * Módulo: Métodos de Pago
  */
 
 const swaggerDefinition = {
@@ -1736,6 +1738,100 @@ const swaggerDefinition = {
             readOnly: true,
             description: 'Subtotal calculado automáticamente (cantidad * precio_unitario)',
             example: 4000.00
+      description: 'Servidor de producción'
+    }
+  ],
+  tags: [
+    {
+      name: 'Métodos de pago',
+      description: 'Gestión de métodos de pago del sistema. Los métodos de pago definen las formas en que los clientes pueden pagar sus compras (efectivo, tarjeta, transferencia, etc.). Se relacionan directamente con ventas y facturas. Incluye soporte para eliminación lógica mediante el campo activo.'
+    }
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Token JWT obtenido del endpoint de autenticación'
+      }
+    },
+    schemas: {
+      MetodoPago: {
+        type: 'object',
+        properties: {
+          id_metodo_pago: {
+            type: 'integer',
+            readOnly: true,
+            description: 'ID único del método de pago',
+            example: 1
+          },
+          nombre: {
+            type: 'string',
+            maxLength: 50,
+            description: 'Nombre del método de pago (debe ser único)',
+            example: 'Efectivo'
+          },
+          descripcion: {
+            type: 'string',
+            nullable: true,
+            description: 'Descripción detallada del método de pago',
+            example: 'Pago en efectivo al momento de la compra'
+          },
+          activo: {
+            type: 'boolean',
+            default: true,
+            description: 'Estado activo/inactivo del método de pago. Usar para eliminación lógica',
+            example: true
+          }
+        },
+        required: ['nombre']
+      },
+      MetodoPagoCreateRequest: {
+        type: 'object',
+        required: ['nombre'],
+        properties: {
+          nombre: {
+            type: 'string',
+            maxLength: 50,
+            minLength: 1,
+            description: 'Nombre del método de pago (debe ser único)',
+            example: 'PayPal'
+          },
+          descripcion: {
+            type: 'string',
+            nullable: true,
+            description: 'Descripción detallada del método de pago (opcional)',
+            example: 'Pagos en línea mediante PayPal'
+          },
+          activo: {
+            type: 'boolean',
+            default: true,
+            description: 'Estado activo/inactivo (opcional, por defecto: true)',
+            example: true
+          }
+        }
+      },
+      MetodoPagoUpdateRequest: {
+        type: 'object',
+        properties: {
+          nombre: {
+            type: 'string',
+            maxLength: 50,
+            minLength: 1,
+            description: 'Nombre del método de pago (debe ser único)',
+            example: 'PayPal Internacional'
+          },
+          descripcion: {
+            type: 'string',
+            nullable: true,
+            description: 'Descripción detallada del método de pago',
+            example: 'Pagos en línea mediante PayPal, acepta múltiples monedas'
+          },
+          activo: {
+            type: 'boolean',
+            description: 'Estado activo/inactivo. Usar false para eliminación lógica',
+            example: true
           }
         }
       },
@@ -1815,6 +1911,15 @@ const swaggerDefinition = {
           200: {
             description: 'Lista de facturas obtenida exitosamente',
             description: 'Lista de compras obtenida exitosamente',
+    '/api/metodos-pago': {
+      get: {
+        tags: ['Métodos de pago'],
+        summary: 'Obtener todos los métodos de pago',
+        description: 'Retorna un listado de todos los métodos de pago registrados en el sistema, ordenados por ID de forma ascendente. Incluye tanto métodos activos como inactivos.',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'Lista de métodos de pago obtenida exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -1833,6 +1938,10 @@ const swaggerDefinition = {
                     data: {
                       type: 'array',
                       items: { $ref: '#/components/schemas/CompraConRelaciones' }
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/MetodoPago' }
                     }
                   }
                 },
@@ -1904,6 +2013,34 @@ const swaggerDefinition = {
                           }
                         }
                       ]
+                      id_metodo_pago: 1,
+                      nombre: 'Efectivo',
+                      descripcion: 'Pago en efectivo al momento de la compra',
+                      activo: true
+                    },
+                    {
+                      id_metodo_pago: 2,
+                      nombre: 'Tarjeta de Crédito',
+                      descripcion: 'Visa, MasterCard, American Express',
+                      activo: true
+                    },
+                    {
+                      id_metodo_pago: 3,
+                      nombre: 'Tarjeta de Débito',
+                      descripcion: 'Tarjetas de débito bancarias',
+                      activo: true
+                    },
+                    {
+                      id_metodo_pago: 4,
+                      nombre: 'Transferencia Bancaria',
+                      descripcion: 'Transferencia electrónica bancaria',
+                      activo: true
+                    },
+                    {
+                      id_metodo_pago: 5,
+                      nombre: 'SINPE Móvil',
+                      descripcion: 'Sistema de pagos móviles de Costa Rica',
+                      activo: true
                     }
                   ]
                 }
@@ -1935,6 +2072,10 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Error al obtener compras: Database connection failed'
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Error al obtener métodos de pago: Database connection failed'
                 }
               }
             }
@@ -2028,6 +2169,9 @@ const swaggerDefinition = {
 4. Se retorna la compra completa con todos sus detalles y relaciones
 
 **Nota importante:** Al registrar una compra, conceptualmente debería actualizarse el inventario de los productos comprados (aumentar el stock). Esta lógica debe implementarse a nivel de servicio o mediante triggers de base de datos según las necesidades del negocio.`,
+        tags: ['Métodos de pago'],
+        summary: 'Crear un nuevo método de pago',
+        description: 'Registra un nuevo método de pago en el sistema. El nombre del método debe ser único. Solo usuarios con rol de Administrador (Rol 1) pueden crear métodos de pago.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -2073,6 +2217,28 @@ const swaggerDefinition = {
                         precio_unitario: 20.00
                       }
                     ]
+              schema: { $ref: '#/components/schemas/MetodoPagoCreateRequest' },
+              examples: {
+                metodoPagoCompleto: {
+                  summary: 'Método de pago completo',
+                  value: {
+                    nombre: 'PayPal',
+                    descripcion: 'Pagos en línea mediante PayPal',
+                    activo: true
+                  }
+                },
+                metodoPagoMinimo: {
+                  summary: 'Método de pago con solo nombre',
+                  value: {
+                    nombre: 'Criptomonedas'
+                  }
+                },
+                metodoPagoInactivo: {
+                  summary: 'Método de pago creado como inactivo',
+                  value: {
+                    nombre: 'Cheque',
+                    descripcion: 'Pago mediante cheque bancario',
+                    activo: false
                   }
                 }
               }
@@ -2083,6 +2249,7 @@ const swaggerDefinition = {
           201: {
             description: 'Factura creada exitosamente',
             description: 'Compra registrada exitosamente',
+            description: 'Método de pago creado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2102,6 +2269,9 @@ const swaggerDefinition = {
                     success: { type: 'boolean', example: true },
                     message: { type: 'string', example: 'Compra registrada exitosamente' },
                     data: { $ref: '#/components/schemas/CompraConRelaciones' }
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Método de pago creado exitosamente' },
+                    data: { $ref: '#/components/schemas/MetodoPago' }
                   }
                 },
                 example: {
@@ -2147,6 +2317,12 @@ const swaggerDefinition = {
                         }
                       }
                     ]
+                  message: 'Método de pago creado exitosamente',
+                  data: {
+                    id_metodo_pago: 6,
+                    nombre: 'PayPal',
+                    descripcion: 'Pagos en línea mediante PayPal',
+                    activo: true
                   }
                 }
               }
@@ -2178,6 +2354,18 @@ const swaggerDefinition = {
                     value: {
                       success: false,
                       error: 'Los detalles deben ser un arreglo'
+                  nombreRequerido: {
+                    summary: 'Nombre no proporcionado',
+                    value: {
+                      success: false,
+                      error: 'El nombre del método de pago es requerido'
+                    }
+                  },
+                  nombreDuplicado: {
+                    summary: 'Nombre ya existe',
+                    value: {
+                      success: false,
+                      error: 'Ya existe un método de pago con ese nombre'
                     }
                   }
                 }
@@ -2205,6 +2393,7 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Acceso denegado. Solo administradores pueden crear compras'
+                  error: 'Acceso denegado. Solo administradores pueden crear métodos de pago'
                 }
               }
             }
@@ -2230,6 +2419,11 @@ const swaggerDefinition = {
         tags: ['Compras'],
         summary: 'Obtener una compra por ID',
         description: 'Retorna los detalles completos de una compra específica, incluyendo el usuario que la registró y todos los detalles de la compra con información de los productos.',
+    '/api/metodos-pago/{id}': {
+      get: {
+        tags: ['Métodos de pago'],
+        summary: 'Obtener un método de pago por ID',
+        description: 'Retorna los detalles de un método de pago específico mediante su ID.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2242,6 +2436,7 @@ const swaggerDefinition = {
             },
             description: 'ID de la factura',
             description: 'ID de la compra',
+            description: 'ID del método de pago',
             example: 1
           }
         ],
@@ -2249,6 +2444,7 @@ const swaggerDefinition = {
           200: {
             description: 'Factura encontrada',
             description: 'Compra encontrada exitosamente',
+            description: 'Método de pago encontrado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2263,6 +2459,8 @@ const swaggerDefinition = {
                     }
                     success: { type: 'boolean', example: true },
                     data: { $ref: '#/components/schemas/CompraConRelaciones' }
+                    success: { type: 'boolean', example: true },
+                    data: { $ref: '#/components/schemas/MetodoPago' }
                   }
                 },
                 example: {
@@ -2334,6 +2532,10 @@ const swaggerDefinition = {
                         }
                       }
                     ]
+                    id_metodo_pago: 1,
+                    nombre: 'Efectivo',
+                    descripcion: 'Pago en efectivo al momento de la compra',
+                    activo: true
                   }
                 }
               }
@@ -2358,6 +2560,7 @@ const swaggerDefinition = {
           404: {
             description: 'Venta no encontrada',
             description: 'Compra no encontrada',
+            description: 'Método de pago no encontrado',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -2366,6 +2569,7 @@ const swaggerDefinition = {
                   error: 'Factura no encontrada'
                   error: 'Venta no encontrada'
                   error: 'Compra no encontrada'
+                  error: 'Método de pago no encontrado'
                 }
               }
             }
@@ -2391,6 +2595,9 @@ const swaggerDefinition = {
         tags: ['Compras'],
         summary: 'Actualizar una compra existente',
         description: 'Actualiza la información de una compra. Solo se modifican los campos proporcionados en el body. Requiere rol de Administrador (Rol 1). **Nota:** Esta operación no actualiza los detalles de la compra, solo los campos principales (usuario, total, fecha).',
+        tags: ['Métodos de pago'],
+        summary: 'Actualizar un método de pago existente',
+        description: 'Actualiza la información de un método de pago. Solo se modifican los campos proporcionados en el body. Requiere rol de Administrador (Rol 1). **Recomendación:** Para deshabilitar un método de pago, usar este endpoint con `activo: false` en lugar de eliminarlo (eliminación lógica).',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2403,6 +2610,7 @@ const swaggerDefinition = {
             },
             description: 'ID de la factura a actualizar',
             description: 'ID de la compra a actualizar',
+            description: 'ID del método de pago a actualizar',
             example: 1
           }
         ],
@@ -2495,6 +2703,34 @@ const swaggerDefinition = {
                   summary: 'Actualizar solo la fecha',
                   value: {
                     fecha: '2025-11-24T10:00:00.000Z'
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/MetodoPagoUpdateRequest' },
+              examples: {
+                actualizarNombre: {
+                  summary: 'Actualizar solo nombre',
+                  value: {
+                    nombre: 'PayPal Internacional'
+                  }
+                },
+                actualizarDescripcion: {
+                  summary: 'Actualizar solo descripción',
+                  value: {
+                    descripcion: 'Pago en efectivo, colones o dólares'
+                  }
+                },
+                deshabilitarMetodo: {
+                  summary: 'Deshabilitar método (eliminación lógica)',
+                  value: {
+                    activo: false
+                  }
+                },
+                actualizarCompleto: {
+                  summary: 'Actualización completa',
+                  value: {
+                    nombre: 'PayPal Internacional',
+                    descripcion: 'Pagos en línea mediante PayPal, acepta múltiples monedas',
+                    activo: true
                   }
                 }
               }
@@ -2512,6 +2748,7 @@ const swaggerDefinition = {
           200: {
             description: 'Venta eliminada exitosamente',
             description: 'Compra actualizada exitosamente',
+            description: 'Método de pago actualizado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2528,6 +2765,19 @@ const swaggerDefinition = {
                     data: {
                       $ref: '#/components/schemas/FacturaConRelaciones'
                     }
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Método de pago actualizado exitosamente' },
+                    data: { $ref: '#/components/schemas/MetodoPago' }
+                  }
+                },
+                example: {
+                  success: true,
+                  message: 'Método de pago actualizado exitosamente',
+                  data: {
+                    id_metodo_pago: 6,
+                    nombre: 'PayPal Internacional',
+                    descripcion: 'Pagos en línea mediante PayPal, acepta múltiples monedas',
+                    activo: true
                   }
                 }
               }
@@ -2580,6 +2830,13 @@ const swaggerDefinition = {
                       }
                     ]
                   }
+            description: 'Error de validación - Nombre duplicado',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Ya existe un método de pago con ese nombre'
                 }
               }
             }
@@ -2604,6 +2861,7 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Acceso denegado. Solo administradores pueden actualizar compras'
+                  error: 'Acceso denegado. Solo administradores pueden actualizar métodos de pago'
                 }
               }
             }
@@ -2612,6 +2870,7 @@ const swaggerDefinition = {
             description: 'Factura no encontrada',
             description: 'Sin autorización - Usuario no tiene rol de administrador',
             description: 'Compra no encontrada',
+            description: 'Método de pago no encontrado',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -2619,6 +2878,7 @@ const swaggerDefinition = {
                   success: false,
                   error: 'Factura no encontrada'
                   error: 'Compra no encontrada'
+                  error: 'Método de pago no encontrado'
                 }
               }
             }
@@ -2640,6 +2900,14 @@ const swaggerDefinition = {
         tags: ['Compras'],
         summary: 'Eliminar una compra',
         description: 'Elimina permanentemente una compra del sistema, incluyendo todos sus detalles asociados. Esta operación es irreversible. Requiere rol de Administrador (Rol 1). **ADVERTENCIA:** Esta operación elimina permanentemente el registro de la base de datos. Considere implementar eliminación lógica (campo estado o activo) en lugar de eliminación física para mantener el historial. También evalúe el impacto en el inventario: ¿se debe revertir el aumento de stock que se hizo al registrar la compra?',
+        tags: ['Métodos de pago'],
+        summary: 'Eliminar un método de pago',
+        description: `Elimina permanentemente un método de pago del sistema. Esta operación es irreversible. Requiere rol de Administrador (Rol 1).
+
+**⚠️ ADVERTENCIAS IMPORTANTES:**
+- Esta operación elimina permanentemente el registro de la base de datos
+- Antes de eliminar, asegúrese de que el método de pago NO esté siendo utilizado en ventas o facturas existentes, ya que esto podría causar problemas de integridad referencial
+- **RECOMENDACIÓN:** En lugar de eliminar, considere usar PUT con \`activo: false\` para implementar eliminación lógica. Esto preserva el historial y evita problemas de integridad de datos`,
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2653,12 +2921,15 @@ const swaggerDefinition = {
             description: 'ID de la factura a eliminar',
             description: 'ID de la compra a eliminar',
             example: 1
+            description: 'ID del método de pago a eliminar',
+            example: 6
           }
         ],
         responses: {
           200: {
             description: 'Factura eliminada exitosamente',
             description: 'Compra eliminada exitosamente',
+            description: 'Método de pago eliminado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2679,6 +2950,8 @@ const swaggerDefinition = {
                   message: 'Factura eliminada exitosamente'
                     success: { type: 'boolean', example: true },
                     message: { type: 'string', example: 'Compra eliminada exitosamente' }
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Método de pago eliminado exitosamente' }
                   }
                 }
               }
@@ -2711,6 +2984,7 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Acceso denegado. Solo administradores pueden eliminar compras'
+                  error: 'Acceso denegado. Solo administradores pueden eliminar métodos de pago'
                 }
               }
             }
@@ -2718,6 +2992,7 @@ const swaggerDefinition = {
           404: {
             description: 'Venta no encontrada',
             description: 'Compra no encontrada',
+            description: 'Método de pago no encontrado',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -2730,6 +3005,7 @@ const swaggerDefinition = {
                   error: 'Producto no encontrado'
                   error: 'Venta no encontrada'
                   error: 'Compra no encontrada'
+                  error: 'Método de pago no encontrado'
                 }
               }
             }
@@ -2762,6 +3038,23 @@ const options = {
     './routes/*.routes.js',
     './controllers/*.controller.js'
   ]
+            description: 'Error interno del servidor (puede incluir errores de integridad referencial)',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'No se puede eliminar el método de pago porque está siendo utilizado en ventas existentes'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
 const options = {
   swaggerDefinition,
   apis: []
