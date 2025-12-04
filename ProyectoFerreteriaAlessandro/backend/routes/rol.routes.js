@@ -90,7 +90,7 @@ router.get('/:id', authenticateToken, rolController.getRolById.bind(rolControlle
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             type: object
  *             required:
@@ -131,7 +131,7 @@ router.post('/', authenticateToken, authorizeRoles(1), rolController.createRol.b
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             type: object
  *             properties:
