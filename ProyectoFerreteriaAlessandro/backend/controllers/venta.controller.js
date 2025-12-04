@@ -1,4 +1,20 @@
+
 const ventaService = require('../services/venta.service');
+// Obtener la cantidad total de ventas
+const getVentasCount = async (req, res) => {
+  try {
+    const count = await ventaService.getVentasCount();
+    res.status(200).json({
+      success: true,
+      data: { count }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
 
 const getAllVentas = async (req, res) => {
   try {
@@ -103,6 +119,7 @@ module.exports = {
   getVentaById,
   createVenta,
   updateVenta,
-  getTheLast10Ventas
+  getTheLast10Ventas,
+  getVentasCount
 };
 
