@@ -1,3 +1,12 @@
+// Obtener la cantidad total de ventas
+const getVentasCount = async () => {
+  try {
+    const count = await db.Venta.count();
+    return count;
+  } catch (error) {
+    throw new Error('Error al obtener la cantidad de ventas: ' + error.message);
+  }
+};
 const db = require('../models');
 const emailService = require('./email.service');
 
@@ -340,5 +349,6 @@ module.exports = {
   checkAndSendLowStockAlerts,
   getAllVentas,
   getVentaById,
-  getTheLast10Ventas
+  getTheLast10Ventas,
+  getVentasCount
 };

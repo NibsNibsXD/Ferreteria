@@ -94,7 +94,7 @@ router.get('/:id', authenticateToken, sucursalController.getSucursalById);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             type: object
  *             properties:
@@ -150,7 +150,7 @@ router.post('/', authenticateToken, authorizeRoles(1), sucursalController.create
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             type: object
  *             properties:
