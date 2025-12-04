@@ -10,6 +10,8 @@ const swaggerJsdoc = require('swagger-jsdoc');
  * Módulo: Compras
  * Configuración de Swagger/OpenAPI 3.0 para API Ferretería Alessandro
  * Módulo: Métodos de Pago
+ * Configuración de Swagger/OpenAPI 3.0 para API Ferretería Alessandro
+ * Módulo: Detalles de Compra
  */
 
 const swaggerDefinition = {
@@ -52,6 +54,8 @@ const swaggerDefinition = {
       description: 'Gestión de ventas del sistema. Incluye operaciones de registro, consulta, actualización y eliminación de ventas. El proceso de venta incluye la creación automática de facturas, actualización de stock de productos y envío de alertas de bajo stock.'
       name: 'Compras',
       description: 'Gestión de compras del sistema. Incluye operaciones de registro, consulta, actualización y eliminación de compras. Permite gestionar las compras de productos a proveedores, incluyendo los detalles de cada compra (productos, cantidades y precios).'
+      name: 'Detalles de compra',
+      description: 'Gestión de detalles (líneas/items) de compras. Los detalles de compra representan los productos individuales incluidos en cada compra, especificando cantidad, precio unitario y subtotal. Se relacionan con Compras y Productos. Incluye cálculo automático de subtotales.'
     }
   ],
   components: {
@@ -1832,6 +1836,151 @@ const swaggerDefinition = {
             type: 'boolean',
             description: 'Estado activo/inactivo. Usar false para eliminación lógica',
             example: true
+      DetalleCompra: {
+        type: 'object',
+        properties: {
+          id_detalle: {
+            type: 'integer',
+            readOnly: true,
+            description: 'ID único del detalle de compra',
+            example: 1
+          },
+          id_compra: {
+            type: 'integer',
+            nullable: true,
+            description: 'ID de la compra asociada',
+            example: 5
+          },
+          id_producto: {
+            type: 'integer',
+            nullable: true,
+            description: 'ID del producto comprado',
+            example: 10
+          },
+          cantidad: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Cantidad de unidades compradas',
+            example: 50
+          },
+          precio_unitario: {
+            type: 'number',
+            format: 'decimal',
+            minimum: 0,
+            description: 'Precio unitario de compra',
+            example: 15.50
+          },
+          subtotal: {
+            type: 'number',
+            format: 'decimal',
+            nullable: true,
+            description: 'Subtotal calculado automáticamente (cantidad * precio_unitario). Se puede proporcionar manualmente para casos especiales (descuentos, ajustes)',
+            example: 775.00
+          }
+        },
+        required: ['cantidad', 'precio_unitario']
+      },
+      DetalleCompraConRelaciones: {
+        allOf: [
+          { $ref: '#/components/schemas/DetalleCompra' },
+          {
+            type: 'object',
+            properties: {
+              compra: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  id_compra: { type: 'integer', example: 5 },
+                  fecha: { type: 'string', format: 'date-time', example: '2025-11-20T10:30:00.000Z' },
+                  total: { type: 'number', format: 'decimal', example: 1550.00 },
+                  id_usuario: { type: 'integer', example: 2 }
+                }
+              },
+              producto: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  id_producto: { type: 'integer', example: 10 },
+                  nombre: { type: 'string', example: 'Tornillo 1/4 x 2"' },
+                  codigo_barra: { type: 'string', example: '7501234567890' },
+                  descripcion: { type: 'string', example: 'Tornillo de acero galvanizado' },
+                  precio_compra: { type: 'number', format: 'decimal', example: 12.00 },
+                  precio_venta: { type: 'number', format: 'decimal', example: 20.00 },
+                  stock: { type: 'integer', example: 500 }
+                }
+              }
+            }
+          }
+        ]
+      },
+      DetalleCompraCreateRequest: {
+        type: 'object',
+        required: ['id_compra', 'id_producto', 'cantidad', 'precio_unitario'],
+        properties: {
+          id_compra: {
+            type: 'integer',
+            description: 'ID de la compra asociada',
+            example: 5
+          },
+          id_producto: {
+            type: 'integer',
+            description: 'ID del producto comprado',
+            example: 10
+          },
+          cantidad: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Cantidad de unidades compradas (debe ser mayor a 0)',
+            example: 50
+          },
+          precio_unitario: {
+            type: 'number',
+            format: 'decimal',
+            minimum: 0,
+            description: 'Precio unitario de compra (debe ser >= 0)',
+            example: 15.50
+          },
+          subtotal: {
+            type: 'number',
+            format: 'decimal',
+            minimum: 0,
+            description: 'Subtotal opcional. Si no se proporciona, se calcula automáticamente como cantidad * precio_unitario',
+            example: 775.00
+          }
+        }
+      },
+      DetalleCompraUpdateRequest: {
+        type: 'object',
+        properties: {
+          id_compra: {
+            type: 'integer',
+            description: 'ID de la compra asociada',
+            example: 5
+          },
+          id_producto: {
+            type: 'integer',
+            description: 'ID del producto comprado',
+            example: 10
+          },
+          cantidad: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Cantidad de unidades compradas (debe ser mayor a 0)',
+            example: 60
+          },
+          precio_unitario: {
+            type: 'number',
+            format: 'decimal',
+            minimum: 0,
+            description: 'Precio unitario de compra (debe ser >= 0)',
+            example: 16.00
+          },
+          subtotal: {
+            type: 'number',
+            format: 'decimal',
+            minimum: 0,
+            description: 'Subtotal. Si no se proporciona, se recalcula automáticamente',
+            example: 960.00
           }
         }
       },
@@ -1875,6 +2024,11 @@ const swaggerDefinition = {
         tags: ['Compras'],
         summary: 'Obtener todas las compras',
         description: 'Retorna un listado de todas las compras registradas en el sistema. Incluye información del usuario que registró la compra y los detalles de cada compra (productos, cantidades, precios). Soporta paginación opcional.',
+    '/api/detalles-compra': {
+      get: {
+        tags: ['Detalles de compra'],
+        summary: 'Obtener todos los detalles de compra',
+        description: 'Retorna un listado de todos los detalles de compra registrados en el sistema, ordenados por ID de forma ascendente. Incluye información de la compra asociada y el producto. Soporta paginación opcional.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -1904,6 +2058,9 @@ const swaggerDefinition = {
               maximum: 100
             },
             description: 'Cantidad de compras por página',
+              maximum: 100
+            },
+            description: 'Cantidad de detalles por página',
             example: 10
           }
         ],
@@ -1920,6 +2077,7 @@ const swaggerDefinition = {
         responses: {
           200: {
             description: 'Lista de métodos de pago obtenida exitosamente',
+            description: 'Lista de detalles de compra obtenida exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -1942,6 +2100,10 @@ const swaggerDefinition = {
                     data: {
                       type: 'array',
                       items: { $ref: '#/components/schemas/MetodoPago' }
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/DetalleCompraConRelaciones' }
                     }
                   }
                 },
@@ -2041,6 +2203,25 @@ const swaggerDefinition = {
                       nombre: 'SINPE Móvil',
                       descripcion: 'Sistema de pagos móviles de Costa Rica',
                       activo: true
+                      id_detalle: 1,
+                      id_compra: 5,
+                      id_producto: 10,
+                      cantidad: 50,
+                      precio_unitario: 15.50,
+                      subtotal: 775.00,
+                      compra: {
+                        id_compra: 5,
+                        fecha: '2025-11-20T10:30:00.000Z',
+                        total: 1550.00,
+                        id_usuario: 2
+                      },
+                      producto: {
+                        id_producto: 10,
+                        nombre: 'Tornillo 1/4 x 2"',
+                        codigo_barra: '7501234567890',
+                        precio_compra: 12.00,
+                        precio_venta: 20.00
+                      }
                     }
                   ]
                 }
@@ -2076,6 +2257,10 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Error al obtener métodos de pago: Database connection failed'
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Error al obtener detalles de compra: Database connection failed'
                 }
               }
             }
@@ -2172,6 +2357,15 @@ const swaggerDefinition = {
         tags: ['Métodos de pago'],
         summary: 'Crear un nuevo método de pago',
         description: 'Registra un nuevo método de pago en el sistema. El nombre del método debe ser único. Solo usuarios con rol de Administrador (Rol 1) pueden crear métodos de pago.',
+        tags: ['Detalles de compra'],
+        summary: 'Crear un nuevo detalle de compra',
+        description: `Crea un nuevo detalle (línea/item) de compra. Solo usuarios con rol de Administrador (Rol 1) pueden crear detalles de compra.
+
+**Proceso automático:**
+- El subtotal se calcula automáticamente como \`cantidad * precio_unitario\` si no se proporciona
+- Se retorna el detalle completo con información de la compra y producto asociados
+
+**Nota importante:** Actualmente NO se actualiza automáticamente el stock del producto. Esta lógica debe implementarse según las necesidades del negocio (triggers de BD, lógica en service, o transacciones en módulo de Compra).`,
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -2239,6 +2433,34 @@ const swaggerDefinition = {
                     nombre: 'Cheque',
                     descripcion: 'Pago mediante cheque bancario',
                     activo: false
+              schema: { $ref: '#/components/schemas/DetalleCompraCreateRequest' },
+              examples: {
+                detalleCompleto: {
+                  summary: 'Detalle con subtotal manual',
+                  value: {
+                    id_compra: 5,
+                    id_producto: 10,
+                    cantidad: 50,
+                    precio_unitario: 15.50,
+                    subtotal: 775.00
+                  }
+                },
+                detalleAutomatico: {
+                  summary: 'Detalle con subtotal automático',
+                  value: {
+                    id_compra: 5,
+                    id_producto: 10,
+                    cantidad: 50,
+                    precio_unitario: 15.50
+                  }
+                },
+                detalleMinimo: {
+                  summary: 'Detalle con campos mínimos',
+                  value: {
+                    id_compra: 8,
+                    id_producto: 25,
+                    cantidad: 100,
+                    precio_unitario: 8.75
                   }
                 }
               }
@@ -2250,6 +2472,7 @@ const swaggerDefinition = {
             description: 'Factura creada exitosamente',
             description: 'Compra registrada exitosamente',
             description: 'Método de pago creado exitosamente',
+            description: 'Detalle de compra creado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2272,6 +2495,9 @@ const swaggerDefinition = {
                     success: { type: 'boolean', example: true },
                     message: { type: 'string', example: 'Método de pago creado exitosamente' },
                     data: { $ref: '#/components/schemas/MetodoPago' }
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Detalle de compra creado exitosamente' },
+                    data: { $ref: '#/components/schemas/DetalleCompraConRelaciones' }
                   }
                 },
                 example: {
@@ -2323,6 +2549,29 @@ const swaggerDefinition = {
                     nombre: 'PayPal',
                     descripcion: 'Pagos en línea mediante PayPal',
                     activo: true
+                  message: 'Detalle de compra creado exitosamente',
+                  data: {
+                    id_detalle: 1,
+                    id_compra: 5,
+                    id_producto: 10,
+                    cantidad: 50,
+                    precio_unitario: 15.50,
+                    subtotal: 775.00,
+                    compra: {
+                      id_compra: 5,
+                      fecha: '2025-11-20T10:30:00.000Z',
+                      total: 1550.00,
+                      id_usuario: 2
+                    },
+                    producto: {
+                      id_producto: 10,
+                      nombre: 'Tornillo 1/4 x 2"',
+                      codigo_barra: '7501234567890',
+                      descripcion: 'Tornillo de acero galvanizado',
+                      precio_compra: 12.00,
+                      precio_venta: 20.00,
+                      stock: 500
+                    }
                   }
                 }
               }
@@ -2366,6 +2615,32 @@ const swaggerDefinition = {
                     value: {
                       success: false,
                       error: 'Ya existe un método de pago con ese nombre'
+                  compraRequerida: {
+                    summary: 'ID de compra no proporcionado',
+                    value: {
+                      success: false,
+                      error: 'El ID de la compra es requerido'
+                    }
+                  },
+                  productoRequerido: {
+                    summary: 'ID de producto no proporcionado',
+                    value: {
+                      success: false,
+                      error: 'El ID del producto es requerido'
+                    }
+                  },
+                  cantidadInvalida: {
+                    summary: 'Cantidad inválida',
+                    value: {
+                      success: false,
+                      error: 'La cantidad debe ser mayor a 0'
+                    }
+                  },
+                  precioInvalido: {
+                    summary: 'Precio inválido',
+                    value: {
+                      success: false,
+                      error: 'El precio unitario es requerido y debe ser mayor o igual a 0'
                     }
                   }
                 }
@@ -2394,6 +2669,7 @@ const swaggerDefinition = {
                   success: false,
                   error: 'Acceso denegado. Solo administradores pueden crear compras'
                   error: 'Acceso denegado. Solo administradores pueden crear métodos de pago'
+                  error: 'Acceso denegado. Solo administradores pueden crear detalles de compra'
                 }
               }
             }
@@ -2424,6 +2700,11 @@ const swaggerDefinition = {
         tags: ['Métodos de pago'],
         summary: 'Obtener un método de pago por ID',
         description: 'Retorna los detalles de un método de pago específico mediante su ID.',
+    '/api/detalles-compra/{id}': {
+      get: {
+        tags: ['Detalles de compra'],
+        summary: 'Obtener un detalle de compra por ID',
+        description: 'Retorna la información detallada de un detalle de compra específico, incluyendo información completa de la compra asociada y el producto.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2437,6 +2718,7 @@ const swaggerDefinition = {
             description: 'ID de la factura',
             description: 'ID de la compra',
             description: 'ID del método de pago',
+            description: 'ID del detalle de compra',
             example: 1
           }
         ],
@@ -2445,6 +2727,7 @@ const swaggerDefinition = {
             description: 'Factura encontrada',
             description: 'Compra encontrada exitosamente',
             description: 'Método de pago encontrado exitosamente',
+            description: 'Detalle de compra encontrado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2461,6 +2744,8 @@ const swaggerDefinition = {
                     data: { $ref: '#/components/schemas/CompraConRelaciones' }
                     success: { type: 'boolean', example: true },
                     data: { $ref: '#/components/schemas/MetodoPago' }
+                    success: { type: 'boolean', example: true },
+                    data: { $ref: '#/components/schemas/DetalleCompraConRelaciones' }
                   }
                 },
                 example: {
@@ -2536,6 +2821,27 @@ const swaggerDefinition = {
                     nombre: 'Efectivo',
                     descripcion: 'Pago en efectivo al momento de la compra',
                     activo: true
+                    id_detalle: 1,
+                    id_compra: 5,
+                    id_producto: 10,
+                    cantidad: 50,
+                    precio_unitario: 15.50,
+                    subtotal: 775.00,
+                    compra: {
+                      id_compra: 5,
+                      fecha: '2025-11-20T10:30:00.000Z',
+                      total: 1550.00,
+                      id_usuario: 2
+                    },
+                    producto: {
+                      id_producto: 10,
+                      nombre: 'Tornillo 1/4 x 2"',
+                      codigo_barra: '7501234567890',
+                      descripcion: 'Tornillo de acero galvanizado',
+                      precio_compra: 12.00,
+                      precio_venta: 20.00,
+                      stock: 500
+                    }
                   }
                 }
               }
@@ -2561,6 +2867,7 @@ const swaggerDefinition = {
             description: 'Venta no encontrada',
             description: 'Compra no encontrada',
             description: 'Método de pago no encontrado',
+            description: 'Detalle de compra no encontrado',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -2570,6 +2877,7 @@ const swaggerDefinition = {
                   error: 'Venta no encontrada'
                   error: 'Compra no encontrada'
                   error: 'Método de pago no encontrado'
+                  error: 'Detalle de compra no encontrado'
                 }
               }
             }
@@ -2598,6 +2906,9 @@ const swaggerDefinition = {
         tags: ['Métodos de pago'],
         summary: 'Actualizar un método de pago existente',
         description: 'Actualiza la información de un método de pago. Solo se modifican los campos proporcionados en el body. Requiere rol de Administrador (Rol 1). **Recomendación:** Para deshabilitar un método de pago, usar este endpoint con `activo: false` en lugar de eliminarlo (eliminación lógica).',
+        tags: ['Detalles de compra'],
+        summary: 'Actualizar un detalle de compra existente',
+        description: 'Actualiza la información de un detalle de compra. Solo se modifican los campos proporcionados en el body. Requiere rol de Administrador (Rol 1). **Nota:** Si se actualizan cantidad o precio_unitario y no se proporciona subtotal, éste se recalcula automáticamente.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2611,6 +2922,7 @@ const swaggerDefinition = {
             description: 'ID de la factura a actualizar',
             description: 'ID de la compra a actualizar',
             description: 'ID del método de pago a actualizar',
+            description: 'ID del detalle de compra a actualizar',
             example: 1
           }
         ],
@@ -2731,6 +3043,37 @@ const swaggerDefinition = {
                     nombre: 'PayPal Internacional',
                     descripcion: 'Pagos en línea mediante PayPal, acepta múltiples monedas',
                     activo: true
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/DetalleCompraUpdateRequest' },
+              examples: {
+                actualizarCantidad: {
+                  summary: 'Actualizar solo cantidad',
+                  value: {
+                    cantidad: 60
+                  }
+                },
+                actualizarPrecio: {
+                  summary: 'Actualizar solo precio',
+                  value: {
+                    precio_unitario: 16.00
+                  }
+                },
+                actualizarCantidadYPrecio: {
+                  summary: 'Actualizar cantidad y precio (subtotal se recalcula)',
+                  value: {
+                    cantidad: 60,
+                    precio_unitario: 16.00
+                  }
+                },
+                actualizarCompleto: {
+                  summary: 'Actualización completa con subtotal manual',
+                  value: {
+                    id_compra: 5,
+                    id_producto: 10,
+                    cantidad: 60,
+                    precio_unitario: 16.00,
+                    subtotal: 960.00
                   }
                 }
               }
@@ -2749,6 +3092,7 @@ const swaggerDefinition = {
             description: 'Venta eliminada exitosamente',
             description: 'Compra actualizada exitosamente',
             description: 'Método de pago actualizado exitosamente',
+            description: 'Detalle de compra actualizado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2768,6 +3112,9 @@ const swaggerDefinition = {
                     success: { type: 'boolean', example: true },
                     message: { type: 'string', example: 'Método de pago actualizado exitosamente' },
                     data: { $ref: '#/components/schemas/MetodoPago' }
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Detalle de compra actualizado exitosamente' },
+                    data: { $ref: '#/components/schemas/DetalleCompraConRelaciones' }
                   }
                 },
                 example: {
@@ -2778,6 +3125,29 @@ const swaggerDefinition = {
                     nombre: 'PayPal Internacional',
                     descripcion: 'Pagos en línea mediante PayPal, acepta múltiples monedas',
                     activo: true
+                  message: 'Detalle de compra actualizado exitosamente',
+                  data: {
+                    id_detalle: 1,
+                    id_compra: 5,
+                    id_producto: 10,
+                    cantidad: 60,
+                    precio_unitario: 16.00,
+                    subtotal: 960.00,
+                    compra: {
+                      id_compra: 5,
+                      fecha: '2025-11-20T10:30:00.000Z',
+                      total: 1550.00,
+                      id_usuario: 2
+                    },
+                    producto: {
+                      id_producto: 10,
+                      nombre: 'Tornillo 1/4 x 2"',
+                      codigo_barra: '7501234567890',
+                      descripcion: 'Tornillo de acero galvanizado',
+                      precio_compra: 12.00,
+                      precio_venta: 20.00,
+                      stock: 500
+                    }
                   }
                 }
               }
@@ -2837,6 +3207,25 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Ya existe un método de pago con ese nombre'
+            description: 'Error de validación - Datos inválidos',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                examples: {
+                  cantidadInvalida: {
+                    summary: 'Cantidad inválida',
+                    value: {
+                      success: false,
+                      error: 'La cantidad debe ser mayor a 0'
+                    }
+                  },
+                  precioInvalido: {
+                    summary: 'Precio inválido',
+                    value: {
+                      success: false,
+                      error: 'El precio unitario debe ser mayor o igual a 0'
+                    }
+                  }
                 }
               }
             }
@@ -2862,6 +3251,7 @@ const swaggerDefinition = {
                   success: false,
                   error: 'Acceso denegado. Solo administradores pueden actualizar compras'
                   error: 'Acceso denegado. Solo administradores pueden actualizar métodos de pago'
+                  error: 'Acceso denegado. Solo administradores pueden actualizar detalles de compra'
                 }
               }
             }
@@ -2871,6 +3261,7 @@ const swaggerDefinition = {
             description: 'Sin autorización - Usuario no tiene rol de administrador',
             description: 'Compra no encontrada',
             description: 'Método de pago no encontrado',
+            description: 'Detalle de compra no encontrado',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -2879,6 +3270,7 @@ const swaggerDefinition = {
                   error: 'Factura no encontrada'
                   error: 'Compra no encontrada'
                   error: 'Método de pago no encontrado'
+                  error: 'Detalle de compra no encontrado'
                 }
               }
             }
@@ -2908,6 +3300,15 @@ const swaggerDefinition = {
 - Esta operación elimina permanentemente el registro de la base de datos
 - Antes de eliminar, asegúrese de que el método de pago NO esté siendo utilizado en ventas o facturas existentes, ya que esto podría causar problemas de integridad referencial
 - **RECOMENDACIÓN:** En lugar de eliminar, considere usar PUT con \`activo: false\` para implementar eliminación lógica. Esto preserva el historial y evita problemas de integridad de datos`,
+        tags: ['Detalles de compra'],
+        summary: 'Eliminar un detalle de compra',
+        description: `Elimina permanentemente un detalle de compra del sistema. Esta operación es irreversible. Requiere rol de Administrador (Rol 1).
+
+**⚠️ ADVERTENCIAS:**
+- Esta operación elimina permanentemente el registro de la base de datos
+- Al eliminar detalles de una compra, considere recalcular el total de la compra
+- **Nota:** Actualmente NO se ajusta el stock del producto automáticamente. Evaluar implementar esta lógica según necesidades del negocio
+- Considere implementar soft delete (campo activo/estado) para mantener historial y auditoría`,
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2923,6 +3324,8 @@ const swaggerDefinition = {
             example: 1
             description: 'ID del método de pago a eliminar',
             example: 6
+            description: 'ID del detalle de compra a eliminar',
+            example: 1
           }
         ],
         responses: {
@@ -2930,6 +3333,7 @@ const swaggerDefinition = {
             description: 'Factura eliminada exitosamente',
             description: 'Compra eliminada exitosamente',
             description: 'Método de pago eliminado exitosamente',
+            description: 'Detalle de compra eliminado exitosamente',
             content: {
               'application/json': {
                 schema: {
@@ -2952,6 +3356,8 @@ const swaggerDefinition = {
                     message: { type: 'string', example: 'Compra eliminada exitosamente' }
                     success: { type: 'boolean', example: true },
                     message: { type: 'string', example: 'Método de pago eliminado exitosamente' }
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Detalle de compra eliminado exitosamente' }
                   }
                 }
               }
@@ -2985,6 +3391,7 @@ const swaggerDefinition = {
                   success: false,
                   error: 'Acceso denegado. Solo administradores pueden eliminar compras'
                   error: 'Acceso denegado. Solo administradores pueden eliminar métodos de pago'
+                  error: 'Acceso denegado. Solo administradores pueden eliminar detalles de compra'
                 }
               }
             }
@@ -2993,6 +3400,7 @@ const swaggerDefinition = {
             description: 'Venta no encontrada',
             description: 'Compra no encontrada',
             description: 'Método de pago no encontrado',
+            description: 'Detalle de compra no encontrado',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -3006,6 +3414,7 @@ const swaggerDefinition = {
                   error: 'Venta no encontrada'
                   error: 'Compra no encontrada'
                   error: 'Método de pago no encontrado'
+                  error: 'Detalle de compra no encontrado'
                 }
               }
             }
