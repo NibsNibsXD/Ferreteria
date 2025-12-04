@@ -106,7 +106,7 @@ router.get('/:id', authenticateToken, usuarioController.getUsuarioById);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             type: object
  *             properties:
@@ -170,7 +170,7 @@ router.post('/', authenticateToken, authorizeRoles(1), usuarioController.createU
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             type: object
  *             properties:

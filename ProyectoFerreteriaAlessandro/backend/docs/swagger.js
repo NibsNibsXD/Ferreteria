@@ -394,6 +394,33 @@ const swaggerDefinition = {
                       }
                     }
                   }
+                },
+                examples: {
+                  success: {
+                    summary: 'Respuesta exitosa',
+                    value: {
+                      success: true,
+                      data: [
+                        {
+                          id_producto: 1,
+                          nombre: 'Martillo de Carpintero 16oz',
+                          descripcion: 'Martillo profesional de acero',
+                          codigo_barra: '7501234567890',
+                          id_categoria: 5,
+                          precio_compra: 85.50,
+                          precio_venta: 125.00,
+                          stock: 50,
+                          stock_minimo: 10,
+                          activo: true,
+                          fecha_registro: '2025-11-24T10:30:00.000Z',
+                          categoria: {
+                            id_categoria: 5,
+                            nombre: 'Herramientas'
+                          }
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -403,6 +430,14 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+            description: 'No autenticado - Token JWT no válido o no proporcionado',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Token no válido o no proporcionado'
+                }
               }
             }
           },
@@ -411,6 +446,11 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Error al obtener productos: [detalle del error]'
+                }
               }
             }
           }
@@ -473,6 +513,22 @@ const swaggerDefinition = {
                     example: true
                   }
                 }
+              },
+              examples: {
+                productoNuevo: {
+                  summary: 'Ejemplo de producto nuevo',
+                  value: {
+                    nombre: 'Destornillador Phillips #2',
+                    descripcion: 'Destornillador de precisión con mango ergonómico',
+                    codigo_barra: '7501234567891',
+                    id_categoria: 5,
+                    precio_compra: 45.00,
+                    precio_venta: 65.00,
+                    stock: 100,
+                    stock_minimo: 20,
+                    activo: true
+                  }
+                }
               }
             }
           }
@@ -497,6 +553,27 @@ const swaggerDefinition = {
                       $ref: '#/components/schemas/ProductoConRelaciones'
                     }
                   }
+                },
+                example: {
+                  success: true,
+                  message: 'Producto creado exitosamente',
+                  data: {
+                    id_producto: 2,
+                    nombre: 'Destornillador Phillips #2',
+                    descripcion: 'Destornillador de precisión con mango ergonómico',
+                    codigo_barra: '7501234567891',
+                    id_categoria: 5,
+                    precio_compra: 45.00,
+                    precio_venta: 65.00,
+                    stock: 100,
+                    stock_minimo: 20,
+                    activo: true,
+                    fecha_registro: '2025-11-24T11:00:00.000Z',
+                    categoria: {
+                      id_categoria: 5,
+                      nombre: 'Herramientas'
+                    }
+                  }
                 }
               }
             }
@@ -506,6 +583,26 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+            description: 'Datos de entrada inválidos o validación fallida',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                examples: {
+                  campoRequerido: {
+                    summary: 'Campo requerido faltante',
+                    value: {
+                      success: false,
+                      error: 'El nombre es requerido'
+                    }
+                  },
+                  precioInvalido: {
+                    summary: 'Precio de venta menor a precio de compra',
+                    value: {
+                      success: false,
+                      error: 'El precio de venta debe ser mayor o igual al precio de compra'
+                    }
+                  }
+                }
               }
             }
           },
@@ -522,6 +619,11 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Acceso denegado. Se requiere rol de administrador'
+                }
               }
             }
           },
@@ -571,6 +673,26 @@ const swaggerDefinition = {
                       $ref: '#/components/schemas/ProductoConRelaciones'
                     }
                   }
+                },
+                example: {
+                  success: true,
+                  data: {
+                    id_producto: 1,
+                    nombre: 'Martillo de Carpintero 16oz',
+                    descripcion: 'Martillo profesional de acero',
+                    codigo_barra: '7501234567890',
+                    id_categoria: 5,
+                    precio_compra: 85.50,
+                    precio_venta: 125.00,
+                    stock: 50,
+                    stock_minimo: 10,
+                    activo: true,
+                    fecha_registro: '2025-11-24T10:30:00.000Z',
+                    categoria: {
+                      id_categoria: 5,
+                      nombre: 'Herramientas'
+                    }
+                  }
                 }
               }
             }
@@ -588,6 +710,11 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Producto no encontrado'
+                }
               }
             }
           },
@@ -659,6 +786,65 @@ const swaggerDefinition = {
                   },
                   activo: {
                     type: 'boolean'
+                    maxLength: 100,
+                    example: 'Martillo de Carpintero 20oz'
+                  },
+                  descripcion: {
+                    type: 'string',
+                    example: 'Martillo profesional de acero reforzado'
+                  },
+                  codigo_barra: {
+                    type: 'string',
+                    maxLength: 50,
+                    example: '7501234567890'
+                  },
+                  id_categoria: {
+                    type: 'integer',
+                    example: 5
+                  },
+                  precio_compra: {
+                    type: 'number',
+                    minimum: 0,
+                    example: 90.00
+                  },
+                  precio_venta: {
+                    type: 'number',
+                    minimum: 0,
+                    example: 135.00
+                  },
+                  stock: {
+                    type: 'integer',
+                    minimum: 0,
+                    example: 75
+                  },
+                  stock_minimo: {
+                    type: 'integer',
+                    minimum: 0,
+                    example: 15
+                  },
+                  activo: {
+                    type: 'boolean',
+                    example: true
+                  }
+                }
+              },
+              examples: {
+                actualizacionParcial: {
+                  summary: 'Actualización parcial (solo precio)',
+                  value: {
+                    precio_compra: 90.00,
+                    precio_venta: 135.00
+                  }
+                },
+                actualizacionCompleta: {
+                  summary: 'Actualización completa',
+                  value: {
+                    nombre: 'Martillo de Carpintero 20oz',
+                    descripcion: 'Martillo profesional de acero reforzado',
+                    precio_compra: 90.00,
+                    precio_venta: 135.00,
+                    stock: 75,
+                    stock_minimo: 15
                   }
                 }
               }
@@ -694,6 +880,11 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'El precio de venta debe ser mayor o igual al precio de compra'
+                }
               }
             }
           },
@@ -707,6 +898,7 @@ const swaggerDefinition = {
           },
           403: {
             description: 'No autorizado',
+            description: 'No autorizado - Requiere rol de administrador',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -718,6 +910,11 @@ const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Producto no encontrado'
+                }
               }
             }
           },
@@ -735,6 +932,7 @@ const swaggerDefinition = {
         tags: ['Productos'],
         summary: 'Eliminar un producto',
         description: 'Elimina un producto del inventario. Requiere autenticación y permisos de administrador.',
+        description: 'Elimina un producto del inventario. IMPORTANTE: Esto es una eliminación física (hard delete). Requiere autenticación y permisos de administrador.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -766,6 +964,10 @@ const swaggerDefinition = {
                       example: 'Producto eliminado exitosamente'
                     }
                   }
+                },
+                example: {
+                  success: true,
+                  message: 'Producto eliminado exitosamente'
                 }
               }
             }
@@ -780,6 +982,7 @@ const swaggerDefinition = {
           },
           403: {
             description: 'No autorizado',
+            description: 'No autorizado - Requiere rol de administrador',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1390,6 +1593,10 @@ const swaggerDefinition = {
                 example: {
                   success: false,
                   error: 'Factura no encontrada'
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  success: false,
+                  error: 'Producto no encontrado'
                 }
               }
             }
@@ -1413,6 +1620,11 @@ const swaggerDefinition = {
  */
 const options = {
   swaggerDefinition,
+ * Se pueden agregar más archivos de rutas aquí para documentación automática
+ */
+const options = {
+  swaggerDefinition,
+  // APIs donde buscar anotaciones JSDoc adicionales (opcional)
   apis: [
     './routes/*.routes.js',
     './controllers/*.controller.js'
