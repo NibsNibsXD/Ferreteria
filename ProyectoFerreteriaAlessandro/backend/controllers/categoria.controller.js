@@ -7,9 +7,9 @@ const categoriaService = require('../services/categoria.service');
 const getAllCategorias = async (req, res) => {
   try {
     const categorias = await categoriaService.getAllCategorias();
-    res.json({ success: true, data: categorias });
+    res.json(categorias); // Devuelve solo el array
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -33,9 +33,11 @@ const getCategoriaById = async (req, res) => {
  */
 const createCategoria = async (req, res) => {
   try {
+    console.log('POST /api/categorias body:', req.body); // Log para depuración
     const nueva = await categoriaService.createCategoria(req.body);
     res.status(201).json({ success: true, message: 'Categoria creada exitosamente', data: nueva });
   } catch (error) {
+    console.error('Error al crear categoria:', error); // Log para depuración
     res.status(500).json({ success: false, error: error.message });
   }
 };
