@@ -3,6 +3,7 @@ import { Login } from './components/Login';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
+import { Productos } from './components/Productos';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -65,12 +66,7 @@ function App() {
           </div>
         );
       case 'productos':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Productos</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Productos user={user} />;
       case 'registro-compras':
         return (
           <div className="p-6">
