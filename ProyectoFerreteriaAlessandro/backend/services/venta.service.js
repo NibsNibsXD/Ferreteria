@@ -120,12 +120,12 @@ const createVenta = async (data, req = null) => {
         {
           model: db.Usuario,
           as: 'usuario',
-          attributes: ['id_usuario', 'nombre', 'apellido', 'correo']
+          attributes: ['id_usuario', 'nombre', 'correo']
         },
         {
           model: db.Cliente,
           as: 'cliente',
-          attributes: ['id_cliente', 'nombre', 'apellido', 'telefono']
+          attributes: ['id_cliente', 'nombre', 'telefono']
         },
         {
           model: db.MetodoPago,
@@ -306,7 +306,7 @@ const getTheLast10Ventas = async () => {
         {
           model: db.Cliente,
           as: 'cliente',
-          attributes: ['id_cliente', 'nombre', 'apellido']
+          attributes: ['id_cliente', 'nombre']
         },
         {
           model: db.MetodoPago,
@@ -330,7 +330,7 @@ const getTheLast10Ventas = async () => {
       fecha: venta.fecha,
       cliente: venta.cliente ? {
         id: venta.cliente.id_cliente,
-        nombre_completo: `${venta.cliente.nombre} ${venta.cliente.apellido}`
+        nombre_completo: venta.cliente.nombre
       } : null,
       metodo_pago: venta.metodo_pago ? {
         id: venta.metodo_pago.id_metodo_pago,

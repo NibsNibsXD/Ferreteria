@@ -31,12 +31,12 @@ const getVentasPorPeriodo = async (fechaInicio, fechaFin) => {
         {
           model: db.Usuario,
           as: 'usuario',
-          attributes: ['id_usuario', 'nombre', 'apellido']
+          attributes: ['id_usuario', 'nombre', 'correo']
         },
         {
           model: db.Cliente,
           as: 'cliente',
-          attributes: ['id_cliente', 'nombre', 'apellido', 'telefono']
+          attributes: ['id_cliente', 'nombre', 'telefono']
         },
         {
           model: db.MetodoPago,
@@ -83,7 +83,7 @@ const getComprasPorPeriodo = async (fechaInicio, fechaFin) => {
         {
           model: db.Usuario,
           as: 'usuario',
-          attributes: ['id_usuario', 'nombre', 'apellido']
+          attributes: ['id_usuario', 'nombre', 'correo']
         },
         {
           model: db.DetalleCompra,
@@ -243,7 +243,7 @@ const getProductosMasVendidos = async (limit = 20, fechaInicio = null, fechaFin 
           ]
         }
       ],
-      group: ['id_producto', 'producto.id_producto', 'producto->categoria.id_categoria'],
+      group: ['DetalleFactura.id_producto', 'producto.id_producto', 'producto->categoria.id_categoria'],
       order: [[db.Sequelize.literal('total_vendido'), 'DESC']],
       limit: parseInt(limit)
     });
@@ -283,17 +283,17 @@ const getClientesFrecuentes = async (limit = 20, fechaInicio = null, fechaFin = 
       where: whereClause,
       attributes: [
         'id_cliente',
-        [db.Sequelize.fn('COUNT', db.Sequelize.col('id_venta')), 'total_compras'],
-        [db.Sequelize.fn('SUM', db.Sequelize.col('total')), 'total_gastado']
+        [db.Sequelize.fn('COUNT', db.Sequelize.col('Venta.id_venta')), 'total_compras'],
+        [db.Sequelize.fn('SUM', db.Sequelize.col('Venta.total')), 'total_gastado']
       ],
       include: [
         {
           model: db.Cliente,
           as: 'cliente',
-          attributes: ['nombre', 'apellido', 'telefono', 'correo', 'direccion']
+          attributes: ['nombre', 'telefono', 'correo', 'direccion']
         }
       ],
-      group: ['id_cliente', 'cliente.id_cliente'],
+      group: ['Venta.id_cliente', 'cliente.id_cliente'],
       order: [[db.Sequelize.literal('total_compras'), 'DESC']],
       limit: parseInt(limit)
     });
