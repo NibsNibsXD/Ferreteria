@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const db = require('../models');
 const { hashPassword, comparePassword, validatePassword } = require('../utils/passwordUtils');
 const { generateToken, authenticateToken } = require('../middleware/authMiddleware');
+const { sendPasswordResetEmail, isEmailConfigured } = require('../services/email.service');
 
 /**
  * POST /api/auth/register
@@ -170,6 +172,145 @@ router.post('/login', async (req, res) => {
     console.error('Error en login:', error);
     res.status(500).json({ 
       error: 'Error al iniciar sesión: ' + error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Generar y enviar enlace/token de recuperación
+ */
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { correo } = req.body;
+
+    if (!correo) {
+      return res.status(400).json({
+        error: 'El correo es requerido'
+      });
+    }
+
+    const usuario = await db.Usuario.findOne({ where: { correo } });
+
+    // Respuesta genérica para evitar enumeración de correos
+    const genericResponse = {
+      message: 'Si el correo está registrado, hemos enviado instrucciones para restablecer la contraseña'
+    };
+
+    if (!usuario || !usuario.estado) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiracion = new Date(Date.now() + 60 * 60 * 1000); // 60 minutos
+
+    await usuario.update({
+      reset_token: tokenHash,
+      reset_token_expiracion: expiracion
+    });
+
+    const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+    const resetUrl = `${frontendBase}/?resetToken=${token}&email=${encodeURIComponent(correo)}`;
+    const emailDisponible = isEmailConfigured();
+
+    if (!emailDisponible && process.env.NODE_ENV === 'production') {
+      return res.status(500).json({
+        error: 'Servicio de correo no configurado. Configure SMTP_USER y SMTP_PASS.'
+      });
+    }
+
+    if (emailDisponible) {
+      await sendPasswordResetEmail({
+        to: correo,
+        nombre: usuario.nombre,
+        resetUrl,
+        // En entornos de producción no se expone el token en la respuesta
+        token: process.env.NODE_ENV !== 'production' ? token : undefined
+      });
+    }
+
+    const respuesta = { ...genericResponse };
+
+    if (!emailDisponible) {
+      respuesta.message = 'Token generado para restablecer contraseña (correo no configurado)';
+      respuesta.token = token;
+      respuesta.resetUrl = resetUrl;
+      respuesta.expiresAt = expiracion;
+    } else if (process.env.NODE_ENV !== 'production') {
+      respuesta.tokenDev = token;
+      respuesta.resetUrlDev = resetUrl;
+      respuesta.expiresAt = expiracion;
+    }
+
+    return res.status(200).json(respuesta);
+  } catch (error) {
+    console.error('Error en forgot-password:', error);
+    return res.status(500).json({
+      error: 'Error al generar el enlace de recuperación: ' + error.message
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Restablecer contraseña usando token
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, correo, contrasenaNueva } = req.body;
+
+    if (!token || !correo || !contrasenaNueva) {
+      return res.status(400).json({
+        error: 'Token, correo y nueva contraseña son requeridos'
+      });
+    }
+
+    const passwordValidation = validatePassword(contrasenaNueva);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({
+        error: passwordValidation.message
+      });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const usuario = await db.Usuario.findOne({
+      where: { correo, reset_token: tokenHash }
+    });
+
+    if (!usuario) {
+      return res.status(400).json({
+        error: 'Token inválido o ya utilizado'
+      });
+    }
+
+    if (!usuario.reset_token_expiracion || new Date(usuario.reset_token_expiracion) < new Date()) {
+      await usuario.update({
+        reset_token: null,
+        reset_token_expiracion: null
+      });
+
+      return res.status(400).json({
+        error: 'El enlace de recuperación ha expirado. Solicita uno nuevo.'
+      });
+    }
+
+    const nuevaContrasenaEncriptada = await hashPassword(contrasenaNueva);
+
+    await usuario.update({
+      contrasena: nuevaContrasenaEncriptada,
+      reset_token: null,
+      reset_token_expiracion: null
+    });
+
+    return res.json({
+      message: 'Contraseña restablecida exitosamente'
+    });
+  } catch (error) {
+    console.error('Error en reset-password:', error);
+    return res.status(500).json({
+      error: 'Error al restablecer la contraseña: ' + error.message
     });
   }
 });
