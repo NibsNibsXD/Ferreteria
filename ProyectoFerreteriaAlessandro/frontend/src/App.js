@@ -5,6 +5,7 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { Productos } from './components/Productos';
 import { Reportes } from './components/Reportes';
+import { CierreCaja } from './components/CierreCaja';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -60,12 +61,7 @@ function App() {
           </div>
         );
       case 'cierre-caja':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Cierre de Caja</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <CierreCaja user={user} />;
       case 'productos':
         return <Productos user={user} />;
       case 'registro-compras':
