@@ -120,21 +120,6 @@ const generatePDF = ({ title = 'Reporte', columns, data, orientation = 'portrait
         currentY = drawRow(currentY, row, false);
       });
 
-      // Agregar número de página en el footer
-      const pages = doc.bufferedPageRange();
-      for (let i = 0; i < pages.count; i++) {
-        doc.switchToPage(i);
-        doc.fontSize(8)
-           .font('Helvetica')
-           .fillColor('#000000')
-           .text(
-             `Página ${i + 1} de ${pages.count}`,
-             doc.page.margins.left,
-             doc.page.height - doc.page.margins.bottom + 10,
-             { align: 'center' }
-           );
-      }
-
       // Finalizar documento
       doc.end();
     } catch (error) {

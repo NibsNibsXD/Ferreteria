@@ -35,6 +35,8 @@ const exportVentas = async (req, res) => {
   try {
     const { formato, desde, hasta } = req.query;
 
+    console.log('Exportando ventas - Params:', { formato, desde, hasta });
+
     // Validar formato
     if (!formato || !['excel', 'pdf'].includes(formato.toLowerCase())) {
       return res.status(400).json({
@@ -46,16 +48,20 @@ const exportVentas = async (req, res) => {
     const fechaInicio = desde ? new Date(desde) : null;
     const fechaFin = hasta ? new Date(hasta) : null;
 
+    console.log('Fechas procesadas:', { fechaInicio, fechaFin });
+
     const ventas = await reportesService.getVentasPorPeriodo(fechaInicio, fechaFin);
+
+    console.log(`Ventas encontradas: ${ventas.length}`);
 
     // Preparar datos para exportación
     const data = ventas.map(venta => ({
       id_venta: venta.id_venta,
       codigo_factura: venta.codigo_factura,
       fecha: new Date(venta.fecha).toLocaleDateString('es-ES'),
-      cliente: venta.cliente ? `${venta.cliente.nombre} ${venta.cliente.apellido}` : 'N/A',
+      cliente: venta.cliente ? venta.cliente.nombre : 'N/A',
       telefono: venta.cliente?.telefono || 'N/A',
-      usuario: venta.usuario ? `${venta.usuario.nombre} ${venta.usuario.apellido}` : 'N/A',
+      usuario: venta.usuario ? venta.usuario.nombre : 'N/A',
       metodo_pago: venta.metodo_pago?.nombre || 'N/A',
       total: parseFloat(venta.total),
       estado: venta.estado
@@ -145,7 +151,7 @@ const exportCompras = async (req, res) => {
     const data = compras.map(compra => ({
       id_compra: compra.id_compra,
       fecha: new Date(compra.fecha).toLocaleDateString('es-ES'),
-      usuario: compra.usuario ? `${compra.usuario.nombre} ${compra.usuario.apellido}` : 'N/A',
+      usuario: compra.usuario ? compra.usuario.nombre : 'N/A',
       total: parseFloat(compra.total),
       num_items: compra.detalles?.length || 0
     }));
@@ -211,6 +217,8 @@ const exportInventario = async (req, res) => {
   try {
     const { formato } = req.query;
 
+    console.log('Exportando inventario - Params:', { formato });
+
     if (!formato || !['excel', 'pdf'].includes(formato.toLowerCase())) {
       return res.status(400).json({
         success: false,
@@ -219,6 +227,8 @@ const exportInventario = async (req, res) => {
     }
 
     const productos = await reportesService.getInventarioActual();
+
+    console.log(`Productos encontrados: ${productos.length}`);
 
     const data = productos.map(producto => ({
       id_producto: producto.id_producto,
@@ -385,6 +395,8 @@ const exportProductosMasVendidos = async (req, res) => {
   try {
     const { formato, limit, desde, hasta } = req.query;
 
+    console.log('Exportando productos más vendidos - Params:', { formato, limit, desde, hasta });
+
     if (!formato || !['excel', 'pdf'].includes(formato.toLowerCase())) {
       return res.status(400).json({
         success: false,
@@ -400,6 +412,8 @@ const exportProductosMasVendidos = async (req, res) => {
       fechaInicio,
       fechaFin
     );
+
+    console.log(`Productos más vendidos encontrados: ${productos.length}`);
 
     const data = productos.map(item => ({
       id_producto: item.id_producto,
@@ -482,6 +496,8 @@ const exportClientesFrecuentes = async (req, res) => {
   try {
     const { formato, limit, desde, hasta } = req.query;
 
+    console.log('Exportando clientes frecuentes - Params:', { formato, limit, desde, hasta });
+
     if (!formato || !['excel', 'pdf'].includes(formato.toLowerCase())) {
       return res.status(400).json({
         success: false,
@@ -498,9 +514,11 @@ const exportClientesFrecuentes = async (req, res) => {
       fechaFin
     );
 
+    console.log(`Clientes frecuentes encontrados: ${clientes.length}`);
+
     const data = clientes.map(item => ({
       id_cliente: item.id_cliente,
-      nombre: item.cliente ? `${item.cliente.nombre} ${item.cliente.apellido}` : 'N/A',
+      nombre: item.cliente ? item.cliente.nombre : 'N/A',
       telefono: item.cliente?.telefono || 'N/A',
       correo: item.cliente?.correo || 'N/A',
       total_compras: parseInt(item.dataValues.total_compras),
