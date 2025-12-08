@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { authService } from '../services/authService';
 import { Mail, ArrowLeft, Lock, CheckCircle, Wrench, Eye, EyeOff } from 'lucide-react';
 
@@ -11,9 +11,33 @@ export function Login({ onLogin }) {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [resetStatus, setResetStatus] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [changeLoading, setChangeLoading] = useState(false);
+
+  // Detectar token desde la URL (?resetToken=...&email=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get('resetToken');
+    const emailFromUrl = params.get('email');
+
+    if (tokenFromUrl && emailFromUrl) {
+      setResetToken(tokenFromUrl);
+      setResetEmail(emailFromUrl);
+      setShowResetPassword(false);
+      setShowChangePassword(true);
+
+      // Limpiar los query params de la barra de dirección
+      if (window.history?.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,32 +54,73 @@ export function Login({ onLogin }) {
     }
   };
 
-  const handleResetPassword = (e) => {
-    e.preventDefault();
-    // TODO: Implementar lógica de recuperación de contraseña con el backend
-    alert('Funcionalidad de recuperación de contraseña pendiente de implementar');
-  };
-
-  const handleChangePassword = (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     setPasswordError('');
+    setResetError('');
+    setResetStatus('');
+    setResetLoading(true);
 
-    if (newPassword.length < 6) {
-      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+    try {
+      const response = await authService.requestPasswordReset(resetEmail);
+      setResetStatus(response.message || 'Revisa tu correo para continuar con el restablecimiento.');
+
+      // Si el backend devuelve token (modo desarrollo sin SMTP), lo precargamos
+      if (response.token || response.tokenDev) {
+        setResetToken(response.token || response.tokenDev);
+      }
+
+      // Mostrar pantalla de cambio para ingresar el token y la nueva contraseña
+      setShowChangePassword(true);
+    } catch (err) {
+      setResetError(err.response?.data?.error || 'No se pudo enviar el enlace de recuperación');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setResetStatus('');
+    setChangeLoading(true);
+
+    if (!resetToken) {
+      setPasswordError('Ingresa el código/token enviado a tu correo');
+      setChangeLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError('La contraseña debe tener al menos 8 caracteres');
+      setChangeLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setPasswordError('Las contraseñas no coinciden');
+      setChangeLoading(false);
       return;
     }
 
-    // TODO: Implementar cambio de contraseña con el backend
-    alert('Contraseña actualizada exitosamente');
-    setNewPassword('');
-    setConfirmPassword('');
-    setResetEmail('');
-    setShowChangePassword(false);
+    try {
+      const response = await authService.resetPassword({
+        token: resetToken,
+        correo: resetEmail,
+        contrasenaNueva: newPassword,
+      });
+
+      setResetStatus(response.message || 'Contraseña actualizada correctamente');
+      setNewPassword('');
+      setConfirmPassword('');
+      setResetToken('');
+      setShowChangePassword(false);
+      setShowResetPassword(false);
+    } catch (err) {
+      setPasswordError(err.response?.data?.error || 'No se pudo restablecer la contraseña');
+    } finally {
+      setChangeLoading(false);
+    }
   };
 
   // Pantalla de cambio de contraseña
@@ -76,11 +141,31 @@ export function Login({ onLogin }) {
           </div>
           <div className="p-6">
             <form onSubmit={handleChangePassword} className="space-y-4">
+              {resetStatus && (
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-green-200 bg-green-50 text-sm text-green-800">
+                  <CheckCircle className="w-4 h-4 mt-0.5" />
+                  <div>{resetStatus}</div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Código o token de recuperación</label>
+                <input
+                  type="text"
+                  placeholder="Pega el código que recibiste por correo"
+                  value={resetToken}
+                  onChange={(e) => setResetToken(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4c81]"
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  Correo asociado: <span className="font-medium">{resetEmail}</span>
+                </p>
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Nueva Contraseña</label>
                 <input
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4c81]"
@@ -107,7 +192,7 @@ export function Login({ onLogin }) {
                 type="submit"
                 className="w-full bg-[#0f4c81] hover:bg-[#0a3a61] text-white py-2 rounded-md transition-colors"
               >
-                Cambiar Contraseña
+                {changeLoading ? 'Actualizando...' : 'Cambiar Contraseña'}
               </button>
               <button
                 type="button"
@@ -117,6 +202,9 @@ export function Login({ onLogin }) {
                   setConfirmPassword('');
                   setPasswordError('');
                   setResetEmail('');
+                  setResetToken('');
+                  setResetStatus('');
+                  setResetError('');
                 }}
                 className="w-full border border-gray-300 hover:bg-gray-50 py-2 rounded-md transition-colors flex items-center justify-center gap-2"
               >
@@ -148,6 +236,17 @@ export function Login({ onLogin }) {
           </div>
           <div className="p-6">
             <form onSubmit={handleResetPassword} className="space-y-4">
+              {resetStatus && (
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-green-200 bg-green-50 text-sm text-green-800">
+                  <CheckCircle className="w-4 h-4 mt-0.5" />
+                  <div>{resetStatus}</div>
+                </div>
+              )}
+              {resetError && (
+                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+                  {resetError}
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Correo electrónico</label>
                 <input
@@ -161,15 +260,18 @@ export function Login({ onLogin }) {
               </div>
               <button
                 type="submit"
-                className="w-full bg-[#0f4c81] hover:bg-[#0a3a61] text-white py-2 rounded-md transition-colors"
+                disabled={resetLoading}
+                className="w-full bg-[#0f4c81] hover:bg-[#0a3a61] text-white py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Enviar enlace de recuperación
+                {resetLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowResetPassword(false);
                   setResetEmail('');
+                  setResetStatus('');
+                  setResetError('');
                 }}
                 className="w-full border border-gray-300 hover:bg-gray-50 py-2 rounded-md transition-colors flex items-center justify-center gap-2"
               >
@@ -215,7 +317,13 @@ export function Login({ onLogin }) {
                 <button
                   type="button"
                   className="text-sm text-[#0f4c81] hover:underline"
-                  onClick={() => setShowResetPassword(true)}
+                  onClick={() => {
+                    setShowResetPassword(true);
+                    setShowChangePassword(false);
+                    setResetStatus('');
+                    setResetError('');
+                    setPasswordError('');
+                  }}
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -240,6 +348,12 @@ export function Login({ onLogin }) {
             {error && (
               <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
                 {error}
+              </div>
+            )}
+            {resetStatus && !showResetPassword && !showChangePassword && (
+              <div className="flex items-start gap-2 p-3 rounded-lg border border-green-200 bg-green-50 text-sm text-green-800">
+                <CheckCircle className="w-4 h-4 mt-0.5" />
+                <div>{resetStatus}</div>
               </div>
             )}
             <button

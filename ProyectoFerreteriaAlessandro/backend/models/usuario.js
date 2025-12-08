@@ -54,6 +54,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false
     },
+    reset_token: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    reset_token_expiracion: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     id_rol: {
       type: DataTypes.INTEGER,
       allowNull: false

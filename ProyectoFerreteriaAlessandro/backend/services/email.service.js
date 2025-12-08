@@ -5,14 +5,14 @@ const nodemailer = require('nodemailer');
  * @returns {nodemailer.Transporter}
  */
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true', // true para port 465, false para otros
-    auth: {
+    port: parseInt(process.env.SMTP_PORT, 10) || 587,
+    secure: process.env.SMTP_SECURE === 'true', // true para 465, false para otros
+    auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
-    }
+    } : undefined
   });
 };
 
@@ -93,6 +93,81 @@ Fecha: ${new Date().toLocaleString('es-ES')}
 };
 
 /**
+ * Envía un correo con el enlace/código para restablecer contraseña
+ * @param {Object} options
+ * @param {string} options.to - Correo destinatario
+ * @param {string} options.nombre - Nombre del usuario (opcional)
+ * @param {string} [options.resetUrl] - Enlace directo con el token
+ * @param {string} [options.token] - Token en texto plano (se envía solo como referencia)
+ * @param {number} [options.expiresInMinutes=60] - Minutos de validez del enlace
+ */
+const sendPasswordResetEmail = async ({ to, nombre = 'usuario', resetUrl, token, expiresInMinutes = 60 }) => {
+  if (!to) {
+    throw new Error('No se especificó un correo destinatario');
+  }
+
+  if (!resetUrl && !token) {
+    throw new Error('Se requiere un enlace o token de recuperación');
+  }
+
+  if (!isEmailConfigured()) {
+    throw new Error('Servicio de correo no configurado (SMTP_USER/SMTP_PASS faltantes)');
+  }
+
+  const transporter = createTransporter();
+
+  const footer = `
+---
+Este mensaje fue generado automáticamente por el sistema de Ferretería Alessandro.
+Si no solicitaste este cambio, ignora este correo.
+`;
+
+  const texto = `
+Hola ${nombre},
+
+Recibimos una solicitud para restablecer tu contraseña.
+
+${resetUrl ? `Puedes restablecerla usando este enlace (válido por ${expiresInMinutes} minutos):
+${resetUrl}
+` : ''}
+${token ? `Si el sistema te pide un código, utiliza:
+${token}
+` : ''}
+Si no solicitaste este cambio, no necesitas hacer nada.
+
+${footer}
+`.trim();
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2937;">
+      <p>Hola <strong>${nombre}</strong>,</p>
+      <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+      ${resetUrl ? `<p>Puedes restablecerla usando este enlace (válido por ${expiresInMinutes} minutos):<br/><a href="${resetUrl}" style="color:#0f4c81;">${resetUrl}</a></p>` : ''}
+      ${token ? `<p>Si el sistema te pide un código, utiliza:<br/><strong style="font-size:16px;">${token}</strong></p>` : ''}
+      <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+      <hr />
+      <p style="font-size:12px; color:#6b7280;">Este mensaje fue generado automáticamente por el sistema de Ferretería Alessandro.</p>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.FROM_EMAIL || process.env.SMTP_USER,
+    to,
+    subject: 'Recuperación de contraseña - Ferretería Alessandro',
+    text: texto,
+    html
+  };
+
+  const info = await transporter.sendMail(mailOptions);
+
+  return {
+    success: true,
+    messageId: info.messageId,
+    message: 'Correo de recuperación enviado'
+  };
+};
+
+/**
  * Verifica la configuración del servicio de correo
  * @returns {boolean} - true si está configurado, false si no
  */
@@ -125,5 +200,6 @@ const getAlertRecipientEmail = (req) => {
 module.exports = {
   sendLowStockAlertEmail,
   isEmailConfigured,
-  getAlertRecipientEmail
+  getAlertRecipientEmail,
+  sendPasswordResetEmail
 };

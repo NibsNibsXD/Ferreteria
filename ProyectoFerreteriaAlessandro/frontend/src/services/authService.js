@@ -23,6 +23,22 @@ export const authService = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
+  // Solicitar recuperación de contraseña
+  requestPasswordReset: async (correo) => {
+    const response = await api.post('/auth/forgot-password', { correo });
+    return response.data;
+  },
+
+  // Restablecer contraseña con token
+  resetPassword: async ({ token, correo, contrasenaNueva }) => {
+    const response = await api.post('/auth/reset-password', {
+      token,
+      correo,
+      contrasenaNueva,
+    });
+    return response.data;
+  },
+
   // Check if user is authenticated
   isAuthenticated: () => {
     return !!localStorage.getItem('token');

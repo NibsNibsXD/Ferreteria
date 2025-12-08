@@ -4,7 +4,7 @@ const { hashPassword } = require('../utils/passwordUtils');
 const getAllUsuarios = async () => {
   try {
     const usuarios = await db.Usuario.findAll({
-      attributes: { exclude: ['contrasena'] },
+      attributes: { exclude: ['contrasena', 'reset_token', 'reset_token_expiracion'] },
       include: [
         { model: db.Sucursal, as: 'sucursal', attributes: ['id_sucursal', 'nombre'] },
         { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] }
@@ -20,7 +20,7 @@ const getAllUsuarios = async () => {
 const getUsuarioById = async (id) => {
   try {
     const usuario = await db.Usuario.findByPk(id, {
-      attributes: { exclude: ['contrasena'] },
+      attributes: { exclude: ['contrasena', 'reset_token', 'reset_token_expiracion'] },
       include: [
         { model: db.Sucursal, as: 'sucursal', attributes: ['id_sucursal', 'nombre'] },
         { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] }
@@ -62,7 +62,7 @@ const createUsuario = async (data) => {
     });
 
     const usuarioCreado = await db.Usuario.findByPk(nuevoUsuario.id_usuario, {
-      attributes: { exclude: ['contrasena'] },
+      attributes: { exclude: ['contrasena', 'reset_token', 'reset_token_expiracion'] },
       include: [
         { model: db.Sucursal, as: 'sucursal', attributes: ['id_sucursal', 'nombre'] },
         { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] }
@@ -100,7 +100,7 @@ const updateUsuario = async (id, data) => {
     });
 
     const usuarioActualizado = await db.Usuario.findByPk(id, {
-      attributes: { exclude: ['contrasena'] },
+      attributes: { exclude: ['contrasena', 'reset_token', 'reset_token_expiracion'] },
       include: [
         { model: db.Sucursal, as: 'sucursal', attributes: ['id_sucursal', 'nombre'] },
         { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] }
