@@ -15,6 +15,8 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('No se encontró token de autenticación');
     }
     return config;
   },
@@ -27,7 +29,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Token inválido, expirado o sin permisos
+      console.error('Error de autenticación:', error.response?.data?.error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
