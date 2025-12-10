@@ -76,7 +76,11 @@ export function CierreCaja({ user }) {
       }
     } catch (error) {
       console.error('Error al cargar datos:', error);
-      alert('Error al cargar los datos');
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      } else {
+        alert('Error al cargar los datos: ' + (error.response?.data?.error || error.message));
+      }
     } finally {
       setLoading(false);
     }

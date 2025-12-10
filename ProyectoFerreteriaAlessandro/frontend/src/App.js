@@ -6,6 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { Productos } from './components/Productos';
 import { Reportes } from './components/Reportes';
 import { CierreCaja } from './components/CierreCaja';
+import { Usuarios } from './components/Usuarios';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -81,12 +82,7 @@ function App() {
       case 'reportes':
         return <Reportes user={user} />;
       case 'usuarios':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Usuarios</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Usuarios user={user} />;
       case 'configuracion':
         return (
           <div className="p-6">

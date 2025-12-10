@@ -8,6 +8,11 @@ const cajaService = {
       return response.data.data || response.data;
     } catch (error) {
       console.error('Error al obtener cajas:', error);
+      console.error('Detalles del error:', {
+        status: error.response?.status,
+        message: error.response?.data?.error || error.message,
+        hasToken: !!localStorage.getItem('token')
+      });
       throw error;
     }
   },
