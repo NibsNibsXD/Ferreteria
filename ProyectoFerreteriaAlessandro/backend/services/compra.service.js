@@ -20,7 +20,7 @@ const getAllCompras = async ({ page, limit } = {}) => {
             {
               model: db.Producto,
               as: 'producto',
-              attributes: ['id_producto', 'nombre', 'codigo']
+              attributes: ['id_producto', 'nombre', 'codigo_barra']
             }
           ]
         }
@@ -65,7 +65,7 @@ const getCompraById = async (id) => {
             {
               model: db.Producto,
               as: 'producto',
-              attributes: ['id_producto', 'nombre', 'codigo', 'descripcion']
+              attributes: ['id_producto', 'nombre', 'codigo_barra', 'descripcion']
             }
           ]
         }
@@ -106,7 +106,7 @@ const createCompra = async (data) => {
       fecha: fecha || new Date()
     });
 
-    // Si se proporcionan detalles, crearlos también
+    // Si se proporcionan detalles, crearlos y actualizar inventario
     if (detalles && detalles.length > 0) {
       const detallesConId = detalles.map(detalle => ({
         id_compra: nuevaCompra.id_compra,
@@ -117,6 +117,17 @@ const createCompra = async (data) => {
       }));
 
       await db.DetalleCompra.bulkCreate(detallesConId);
+
+      // Actualizar el stock de cada producto (SUMAR al inventario)
+      for (const detalle of detalles) {
+        const producto = await db.Producto.findByPk(detalle.id_producto);
+        if (producto) {
+          await producto.update({
+            stock: producto.stock + detalle.cantidad,
+            precio_compra: detalle.precio_unitario // Actualizar también el precio de compra
+          });
+        }
+      }
     }
 
     // Retornar la compra con sus relaciones

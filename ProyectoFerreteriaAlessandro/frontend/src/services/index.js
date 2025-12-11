@@ -37,6 +37,14 @@ export const alertasService = {
   getProductosBajoStock: () => api.get('/alertas/productos-bajo-stock'),
 };
 
+export const compraService = {
+  getAll: (params) => api.get('/compras', { params }),
+  getById: (id) => api.get(`/compras/${id}`),
+  create: (data) => api.post('/compras', data),
+  update: (id, data) => api.put(`/compras/${id}`, data),
+  delete: (id) => api.delete(`/compras/${id}`),
+};
+
 export const rolService = {
   getAll: () => api.get('/roles'),
   getById: (id) => api.get(`/roles/${id}`),
@@ -51,5 +59,6 @@ export default {
   producto: productoService,
   venta: ventaService,
   alertas: alertasService,
+  compra: compraService,
   rol: rolService,
 };

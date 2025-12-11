@@ -47,6 +47,7 @@ const getCompraById = async (req, res) => {
  */
 const createCompra = async (req, res) => {
   try {
+    console.log('Datos recibidos para crear compra:', JSON.stringify(req.body, null, 2));
     const nuevaCompra = await compraService.createCompra(req.body);
     res.status(201).json({
       success: true,
@@ -54,6 +55,7 @@ const createCompra = async (req, res) => {
       data: nuevaCompra
     });
   } catch (error) {
+    console.error('Error al crear compra:', error);
     res.status(500).json({
       success: false,
       error: error.message

@@ -7,6 +7,7 @@ import { Productos } from './components/Productos';
 import { Reportes } from './components/Reportes';
 import { CierreCaja } from './components/CierreCaja';
 import { AlertasStock } from './components/AlertasStock';
+import { RegistroCompras } from './components/RegistroCompras';
 import { Usuarios } from './components/Usuarios';
 import { authService } from './services/authService';
 import './App.css';
@@ -67,12 +68,7 @@ function App() {
       case 'productos':
         return <Productos user={user} />;
       case 'registro-compras':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Registro de Compras</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <RegistroCompras user={user} />;
       case 'alertas-stock':
         return <AlertasStock />;
       case 'reportes':
