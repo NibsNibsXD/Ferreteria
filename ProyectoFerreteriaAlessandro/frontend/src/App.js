@@ -9,6 +9,7 @@ import { CierreCaja } from './components/CierreCaja';
 import { AlertasStock } from './components/AlertasStock';
 import { RegistroCompras } from './components/RegistroCompras';
 import { Usuarios } from './components/Usuarios';
+import { Perfil } from './components/Perfil';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -36,9 +37,13 @@ function App() {
     setCurrentView('home');
   };
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   const handleProfileClick = () => {
-    // TODO: Implementar vista de perfil
-    alert('Perfil de usuario - Funcionalidad pendiente');
+    setCurrentView('perfil');
   };
 
   const toggleSidebar = () => {
@@ -63,6 +68,8 @@ function App() {
             <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
           </div>
         );
+      case 'perfil':
+        return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
       case 'cierre-caja':
         return <CierreCaja user={user} />;
       case 'productos':
@@ -76,12 +83,7 @@ function App() {
       case 'usuarios':
         return <Usuarios user={user} />;
       case 'configuracion':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Configuración</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
       default:
         return <Dashboard />;
     }
