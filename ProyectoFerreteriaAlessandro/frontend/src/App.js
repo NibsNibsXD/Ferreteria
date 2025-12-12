@@ -9,6 +9,7 @@ import { CierreCaja } from './components/CierreCaja';
 import { AlertasStock } from './components/AlertasStock';
 import { RegistroCompras } from './components/RegistroCompras';
 import { Usuarios } from './components/Usuarios';
+import { Devoluciones } from './components/Devoluciones';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -48,7 +49,7 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <Dashboard />;
+        return <Dashboard user={user} />;
       case 'nueva-venta':
         return (
           <div className="p-6">
@@ -57,12 +58,7 @@ function App() {
           </div>
         );
       case 'devoluciones':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Devoluciones</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Devoluciones user={user} />;
       case 'cierre-caja':
         return <CierreCaja user={user} />;
       case 'productos':
@@ -83,7 +79,7 @@ function App() {
           </div>
         );
       default:
-        return <Dashboard />;
+        return <Dashboard user={user} />;
     }
   };
 
