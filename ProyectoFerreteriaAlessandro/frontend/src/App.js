@@ -48,7 +48,7 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <Dashboard />;
+        return <Dashboard user={user} />;
       case 'nueva-venta':
         return (
           <div className="p-6">
@@ -83,7 +83,7 @@ function App() {
           </div>
         );
       default:
-        return <Dashboard />;
+        return <Dashboard user={user} />;
     }
   };
 
