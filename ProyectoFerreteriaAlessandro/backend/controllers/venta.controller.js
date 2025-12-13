@@ -57,12 +57,15 @@ const getVentaById = async (req, res) => {
 
 const createVenta = async (req, res) => {
   try {
+    console.log('Datos recibidos en createVenta:', JSON.stringify(req.body, null, 2));
     const nuevaVenta = await ventaService.createVenta(req.body);
     res.status(201).json({
       success: true,
       data: nuevaVenta
     });
   } catch (error) {
+    console.error('Error en createVenta:', error);
+    console.error('Stack trace:', error.stack);
     const statusCode = error.message.includes('requerido') || 
                        error.message.includes('Ya existe') ? 400 : 500;
     res.status(statusCode).json({
