@@ -1,9 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Save, Eye, EyeOff } from 'lucide-react';
 import usuarioService from '../services/usuarioService';
+import { authService } from '../services/authService';
 import api from '../services/api';
 
+// Función para calcular el tiempo relativo
+const getTimeAgo = (date) => {
+  if (!date) return 'N/D';
+  
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now - past;
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffSeconds < 60) return 'hace unos segundos';
+  if (diffMinutes < 60) return `hace ${diffMinutes} minuto${diffMinutes > 1 ? 's' : ''}`;
+  if (diffHours < 24) return `hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffDays < 30) return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+  if (diffMonths < 12) return `hace ${diffMonths} mes${diffMonths > 1 ? 'es' : ''}`;
+  return `hace ${diffYears} año${diffYears > 1 ? 's' : ''}`;
+};
+
 export function Perfil({ user, onUpdateUser }) {
+  console.log('========== COMPONENTE PERFIL RENDERIZADO ==========');
+  console.log('Perfil renderizado con user:', user);
+  console.log('fecha_creacion del user:', user?.fecha_creacion);
+  console.log('===================================================');
+  
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
@@ -18,6 +46,23 @@ export function Perfil({ user, onUpdateUser }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' });
+
+  // Refrescar datos del usuario al cargar el componente
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        console.log('Perfil: Refrescando datos del usuario...');
+        const refreshedUser = await authService.refreshUserData();
+        console.log('Perfil: Datos refrescados:', refreshedUser);
+        if (refreshedUser) {
+          onUpdateUser(refreshedUser);
+        }
+      } catch (error) {
+        console.error('Error al refrescar datos del usuario:', error);
+      }
+    };
+    fetchUserData();
+  }, [onUpdateUser]);
 
   const clearMessage = () => setMensaje({ tipo: '', texto: '' });
 
@@ -353,7 +398,10 @@ export function Perfil({ user, onUpdateUser }) {
           ) : (
             <div className="text-gray-600">
               <p>Tu contraseña está protegida y encriptada.</p>
-              <p className="text-sm mt-2">Última actualización: hace 3 meses</p>
+              <p className="text-sm mt-2">
+                Última actualización:{' '}
+                {user?.fecha_creacion ? getTimeAgo(user.fecha_creacion) : 'N/D'}
+              </p>
             </div>
           )}
         </div>
@@ -379,9 +427,18 @@ export function Perfil({ user, onUpdateUser }) {
           <div className="flex justify-between py-2 border-b border-gray-200">
             <span className="text-gray-600">Fecha de creación</span>
             <span className="text-gray-900">
-              {user?.fecha_creacion
-                ? new Date(user.fecha_creacion).toLocaleDateString()
-                : 'N/D'}
+              {user?.fecha_creacion ? (
+                <>
+                  {new Date(user.fecha_creacion).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}{' '}
+                  ({getTimeAgo(user.fecha_creacion)})
+                </>
+              ) : (
+                'N/D'
+              )}
             </span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-200">
