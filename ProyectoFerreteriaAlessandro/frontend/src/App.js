@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
+import { DashboardHome } from './components/DashboardHome';
 import { Productos } from './components/Productos';
 import { Reportes } from './components/Reportes';
 import { CierreCaja } from './components/CierreCaja';
@@ -49,7 +49,7 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <Dashboard user={user} />;
+        return <DashboardHome user={user} />;
       case 'nueva-venta':
         return <NuevaVenta user={user} onNavigate={setCurrentView} />;
       case 'devoluciones':
@@ -79,7 +79,7 @@ function App() {
           </div>
         );
       default:
-        return <Dashboard user={user} />;
+        return <DashboardHome user={user} />;
     }
   };
 
