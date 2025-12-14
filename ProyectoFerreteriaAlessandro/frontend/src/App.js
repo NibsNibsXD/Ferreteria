@@ -11,6 +11,7 @@ import { RegistroCompras } from './components/RegistroCompras';
 import { Usuarios } from './components/Usuarios';
 import { NuevaVenta } from './components/NuevaVenta';
 import { Perfil } from './components/Perfil';
+import { Devoluciones } from './components/Devoluciones';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -55,6 +56,7 @@ function App() {
     switch (currentView) {
       case 'home':
         return <DashboardHome user={user} />;
+        return <Dashboard user={user} />;
       case 'nueva-venta':
         return <NuevaVenta user={user} onNavigate={setCurrentView} />;
       case 'devoluciones':
@@ -66,6 +68,7 @@ function App() {
         );
       case 'perfil':
         return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
+        return <Devoluciones user={user} />;
       case 'cierre-caja':
         return <CierreCaja user={user} />;
       case 'productos':
@@ -82,6 +85,7 @@ function App() {
         return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
       default:
         return <DashboardHome user={user} />;
+        return <Dashboard user={user} />;
     }
   };
 
