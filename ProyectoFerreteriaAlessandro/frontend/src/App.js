@@ -9,6 +9,7 @@ import { CierreCaja } from './components/CierreCaja';
 import { AlertasStock } from './components/AlertasStock';
 import { RegistroCompras } from './components/RegistroCompras';
 import { Usuarios } from './components/Usuarios';
+import { NuevaVenta } from './components/NuevaVenta';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -50,12 +51,7 @@ function App() {
       case 'home':
         return <Dashboard user={user} />;
       case 'nueva-venta':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Nueva Venta</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <NuevaVenta user={user} onNavigate={setCurrentView} />;
       case 'devoluciones':
         return (
           <div className="p-6">
