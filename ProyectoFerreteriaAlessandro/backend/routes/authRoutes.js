@@ -150,6 +150,7 @@ router.post('/login', async (req, res) => {
       id_rol: usuario.id_rol,
       id_sucursal: usuario.id_sucursal,
       estado: usuario.estado,
+      fecha_creacion: usuario.fecha_creacion,
       rol: usuario.rol ? {
         id_rol: usuario.rol.id_rol,
         nombre: usuario.rol.nombre

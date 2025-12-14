@@ -42,6 +42,11 @@ const getVentasPorPeriodo = async (fechaInicio, fechaFin) => {
           model: db.MetodoPago,
           as: 'metodo_pago',
           attributes: ['id_metodo_pago', 'nombre']
+        },
+        {
+          model: db.Factura,
+          as: 'factura',
+          attributes: ['subtotal', 'impuesto', 'total']
         }
       ],
       order: [['fecha', 'DESC']]

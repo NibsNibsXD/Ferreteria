@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
+import { DashboardHome } from './components/DashboardHome';
 import { Productos } from './components/Productos';
 import { Reportes } from './components/Reportes';
 import { CierreCaja } from './components/CierreCaja';
 import { AlertasStock } from './components/AlertasStock';
 import { RegistroCompras } from './components/RegistroCompras';
 import { Usuarios } from './components/Usuarios';
+import { NuevaVenta } from './components/NuevaVenta';
+import { Perfil } from './components/Perfil';
 import { Devoluciones } from './components/Devoluciones';
 import { authService } from './services/authService';
 import './App.css';
@@ -37,9 +39,13 @@ function App() {
     setCurrentView('home');
   };
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   const handleProfileClick = () => {
-    // TODO: Implementar vista de perfil
-    alert('Perfil de usuario - Funcionalidad pendiente');
+    setCurrentView('perfil');
   };
 
   const toggleSidebar = () => {
@@ -49,15 +55,19 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'home':
+        return <DashboardHome user={user} />;
         return <Dashboard user={user} />;
       case 'nueva-venta':
+        return <NuevaVenta user={user} onNavigate={setCurrentView} />;
+      case 'devoluciones':
         return (
           <div className="p-6">
-            <h1 className="text-2xl font-bold">Nueva Venta</h1>
+            <h1 className="text-2xl font-bold">Devoluciones</h1>
             <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
           </div>
         );
-      case 'devoluciones':
+      case 'perfil':
+        return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
         return <Devoluciones user={user} />;
       case 'cierre-caja':
         return <CierreCaja user={user} />;
@@ -72,13 +82,9 @@ function App() {
       case 'usuarios':
         return <Usuarios user={user} />;
       case 'configuracion':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Configuración</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
       default:
+        return <DashboardHome user={user} />;
         return <Dashboard user={user} />;
     }
   };
