@@ -89,11 +89,13 @@ export function CierreCaja({ user }) {
   const cargarVentasDelDia = async () => {
     try {
       const ventas = await ventaService.getAll();
+      console.log('Ventas cargadas desde backend:', ventas); // Debug
       const today = new Date().toISOString().split('T')[0];
       const ventasDelDia = ventas.filter(v => {
         const fechaVenta = new Date(v.fecha).toISOString().split('T')[0];
         return fechaVenta === today;
       });
+      console.log('Ventas del día:', ventasDelDia); // Debug
       setVentasHoy(ventasDelDia);
     } catch (error) {
       console.error('Error al cargar ventas:', error);
@@ -231,13 +233,26 @@ export function CierreCaja({ user }) {
   };
 
   // Cálculos
-  const ventasEfectivo = ventasHoy.filter(v => v.metodo_pago === 'Efectivo' || v.id_metodo_pago === 1);
-  const ventasTarjeta = ventasHoy.filter(v => v.metodo_pago === 'Tarjeta' || v.id_metodo_pago === 2);
-  const ventasTransferencia = ventasHoy.filter(v => v.metodo_pago === 'Transferencia' || v.id_metodo_pago === 3);
+  const ventasEfectivo = ventasHoy.filter(v => 
+    (v.metodo_pago_original && typeof v.metodo_pago_original === 'object' && v.metodo_pago_original.nombre === 'Efectivo') || 
+    (typeof v.metodo_pago === 'string' && v.metodo_pago === 'Efectivo') || 
+    v.id_metodo_pago === 1
+  );
+  const ventasTarjeta = ventasHoy.filter(v => 
+    (v.metodo_pago_original && typeof v.metodo_pago_original === 'object' && 
+     (v.metodo_pago_original.nombre === 'Tarjeta de Crédito' || v.metodo_pago_original.nombre === 'Tarjeta de Débito')) || 
+    (typeof v.metodo_pago === 'string' && (v.metodo_pago === 'Tarjeta de Crédito' || v.metodo_pago === 'Tarjeta de Débito')) || 
+    v.id_metodo_pago === 2 || v.id_metodo_pago === 3
+  );
+  const ventasTransferencia = ventasHoy.filter(v => 
+    (v.metodo_pago_original && typeof v.metodo_pago_original === 'object' && v.metodo_pago_original.nombre === 'Transferencia Bancaria') || 
+    (typeof v.metodo_pago === 'string' && v.metodo_pago === 'Transferencia Bancaria') || 
+    v.id_metodo_pago === 4
+  );
 
-  const totalEfectivo = ventasEfectivo.reduce((sum, v) => sum + toNumber(v.total), 0);
-  const totalTarjeta = ventasTarjeta.reduce((sum, v) => sum + toNumber(v.total), 0);
-  const totalTransferencia = ventasTransferencia.reduce((sum, v) => sum + toNumber(v.total), 0);
+  const totalEfectivo = ventasEfectivo.reduce((sum, v) => sum + toNumber(v.factura?.total || 0), 0);
+  const totalTarjeta = ventasTarjeta.reduce((sum, v) => sum + toNumber(v.factura?.total || 0), 0);
+  const totalTransferencia = ventasTransferencia.reduce((sum, v) => sum + toNumber(v.factura?.total || 0), 0);
   const totalVentas = totalEfectivo + totalTarjeta + totalTransferencia;
 
   const saldoInicialNum = toNumber(saldoInicial);
@@ -340,8 +355,10 @@ export function CierreCaja({ user }) {
                   ventasHoy.map((venta) => (
                     <div key={venta.id_venta} className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
                       <span className="font-medium">Venta #{venta.id_venta}</span>
-                      <span className="text-gray-600">{venta.metodo_pago || 'N/A'}</span>
-                      <span className="font-semibold text-[#0f4c81]">L {toNumber(venta.total).toFixed(2)}</span>
+                      <span className="text-gray-600">
+                        {venta.metodo_pago || 'N/A'}
+                      </span>
+                      <span className="font-semibold text-[#0f4c81]">L {toNumber(venta.factura?.total || 0).toFixed(2)}</span>
                     </div>
                   ))
                 )}

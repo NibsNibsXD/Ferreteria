@@ -27,6 +27,7 @@ const createVenta = async (data, req = null) => {
   const transaction = await db.sequelize.transaction();
 
   try {
+    console.log('createVenta - Datos recibidos:', JSON.stringify(data, null, 2));
     const { id_usuario, id_cliente, id_metodo_pago, productos } = data;
 
     // Validaciones básicas
@@ -37,15 +38,27 @@ const createVenta = async (data, req = null) => {
     if (!id_metodo_pago) {
       throw new Error('El método de pago es requerido');
     }
+    
+    console.log('Validaciones básicas pasadas - Productos:', productos.length);
 
     // Generar código de factura único
     const codigoFactura = `FAC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     // Calcular total
-    let total = 0;
+    let subtotal = 0;
     for (const prod of productos) {
-      total += prod.cantidad * prod.precio_unitario;
+      subtotal += prod.cantidad * prod.precio_unitario;
     }
+
+    // Calcular impuesto (15%) y total final
+    const impuesto = subtotal * 0.15;
+    const total = subtotal + impuesto;
+
+    console.log(`💰 Cálculos de venta:`, {
+      subtotal: subtotal,
+      impuesto: impuesto,
+      total: total
+    });
 
     // Crear la venta
     const nuevaVenta = await db.Venta.create({
@@ -59,11 +72,23 @@ const createVenta = async (data, req = null) => {
     }, { transaction });
 
     // Crear la factura asociada
+    console.log(`📄 Creando factura con datos:`, {
+      id_venta: nuevaVenta.id_venta,
+      subtotal: subtotal,
+      impuesto: impuesto,
+      total: total,
+      id_metodo_pago
+    });
+
     const nuevaFactura = await db.Factura.create({
       id_venta: nuevaVenta.id_venta,
-      subtotal: total,
+      subtotal: subtotal,
+      impuesto: impuesto,
+      total: total,
       id_metodo_pago
     }, { transaction });
+
+    console.log(`✅ Factura creada:`, nuevaFactura.toJSON());
 
     // Crear detalles de factura y actualizar stock
     const detallesCreados = [];
