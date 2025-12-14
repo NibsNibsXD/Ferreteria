@@ -1,0 +1,543 @@
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Trash2, Search, ShoppingCart, Printer, X, Barcode, AlertCircle } from 'lucide-react';
+import { productoService, ventaService, clienteService, metodoPagoService, cajaService } from '../services';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from './Toast';
+
+export function NuevaVenta({ user, onNavigate }) {
+  const [codigoBarras, setCodigoBarras] = useState('');
+  const [busquedaProducto, setBusquedaProducto] = useState('');
+  const [items, setItems] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [metodosPago, setMetodosPago] = useState([]);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [metodoPago, setMetodoPago] = useState('');
+  const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tieneCajaAbierta, setTieneCajaAbierta] = useState(false);
+  const [verificandoCaja, setVerificandoCaja] = useState(true);
+  const inputBarrasRef = useRef(null);
+  const toast = useToast();
+
+  // Verificar caja abierta al cargar
+  useEffect(() => {
+    verificarCajaAbierta();
+  }, []);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    if (tieneCajaAbierta) {
+      cargarDatos();
+    }
+  }, [tieneCajaAbierta]);
+
+  // Auto-focus en el input de código de barras
+  useEffect(() => {
+    if (tieneCajaAbierta && !loading) {
+      inputBarrasRef.current?.focus();
+    }
+  }, [tieneCajaAbierta, loading]);
+
+  const verificarCajaAbierta = async () => {
+    try {
+      setVerificandoCaja(true);
+      const response = await cajaService.getAll();
+      const cajas = response.data?.data || response.data || [];
+      
+      console.log('Verificando caja - Cajas:', cajas);
+      console.log('Usuario ID:', user?.id_usuario);
+      
+      // Buscar si el usuario tiene una caja asignada
+      const cajaUsuario = cajas.find(
+        caja => caja.id_usuario === user?.id_usuario
+      );
+
+      console.log('Caja encontrada:', cajaUsuario);
+
+      if (cajaUsuario) {
+        setTieneCajaAbierta(true);
+      } else {
+        setTieneCajaAbierta(false);
+      }
+    } catch (error) {
+      console.error('Error al verificar caja:', error);
+      setTieneCajaAbierta(false);
+    } finally {
+      setVerificandoCaja(false);
+    }
+  };
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const [productosRes, clientesRes, metodosRes] = await Promise.all([
+        productoService.getAll(),
+        clienteService.getAll(),
+        metodoPagoService.getAll(),
+      ]);
+
+      setProductos(productosRes.data?.data || []);
+      setClientes(clientesRes.data?.data || []);
+      setMetodosPago(metodosRes.data?.data || []);
+      
+      // Seleccionar método de pago por defecto (Efectivo si existe)
+      const efectivo = metodosRes.data?.data?.find(m => m.nombre.toLowerCase() === 'efectivo');
+      if (efectivo) {
+        setMetodoPago(efectivo.id_metodo_pago.toString());
+      }
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+      toast.error('Error al cargar datos iniciales');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCodigoBarras = (e) => {
+    e.preventDefault();
+    if (!codigoBarras.trim()) return;
+
+    const producto = productos.find(p => p.codigo_barra === codigoBarras && p.activo);
+    
+    if (producto) {
+      agregarProducto(producto);
+      setCodigoBarras('');
+      toast.success(`${producto.nombre} agregado`);
+    } else {
+      toast.error('Producto no encontrado');
+    }
+  };
+
+  const agregarProducto = (producto) => {
+    const itemExistente = items.find(i => i.producto.id_producto === producto.id_producto);
+    
+    if (itemExistente) {
+      if (itemExistente.cantidad < producto.stock) {
+        setItems(items.map(i =>
+          i.producto.id_producto === producto.id_producto
+            ? { ...i, cantidad: i.cantidad + 1, subtotal: (i.cantidad + 1) * parseFloat(producto.precio_venta) }
+            : i
+        ));
+      } else {
+        toast.error('Stock insuficiente');
+      }
+    } else {
+      setItems([...items, {
+        producto,
+        cantidad: 1,
+        subtotal: parseFloat(producto.precio_venta) || 0,
+      }]);
+    }
+  };
+
+  const actualizarCantidad = (idProducto, nuevaCantidad) => {
+    if (nuevaCantidad <= 0) {
+      eliminarItem(idProducto);
+      return;
+    }
+
+    const item = items.find(i => i.producto.id_producto === idProducto);
+    if (item && nuevaCantidad <= item.producto.stock) {
+      setItems(items.map(i =>
+        i.producto.id_producto === idProducto
+          ? { ...i, cantidad: nuevaCantidad, subtotal: nuevaCantidad * parseFloat(i.producto.precio_venta) }
+          : i
+      ));
+    } else {
+      toast.error('Stock insuficiente');
+    }
+  };
+
+  const eliminarItem = (idProducto) => {
+    setItems(items.filter(i => i.producto.id_producto !== idProducto));
+  };
+
+  const calcularTotal = () => {
+    return items.reduce((sum, item) => sum + item.subtotal, 0);
+  };
+
+  const finalizarVenta = async () => {
+    if (items.length === 0) {
+      toast.error('Agregue productos a la venta');
+      return;
+    }
+
+    if (!metodoPago) {
+      toast.error('Seleccione un método de pago');
+      return;
+    }
+
+    // Preparar array de productos para el backend
+    const productos = items.map(item => ({
+      id_producto: item.producto.id_producto,
+      cantidad: item.cantidad,
+      precio_unitario: parseFloat(item.producto.precio_venta),
+      descuento: 0
+    }));
+    
+    const ventaData = {
+      id_usuario: user.id_usuario,
+      id_cliente: clienteSeleccionado ? parseInt(clienteSeleccionado) : null,
+      id_metodo_pago: parseInt(metodoPago),
+      productos: productos
+    };
+
+    console.log('🚀 Enviando venta al backend:', ventaData);
+    console.log('📦 Productos detallados:', items);
+
+    try {
+      const response = await ventaService.create(ventaData);
+      console.log('✅ Respuesta del backend:', response);
+      const codigoFactura = response.data?.data?.codigo_factura || 'N/A';
+      
+      toast.success(`Venta ${codigoFactura} completada - Total: L ${(calcularTotal() * 1.15).toFixed(2)}`);
+      
+      // Limpiar venta
+      setItems([]);
+      setClienteSeleccionado('');
+      const efectivo = metodosPago.find(m => m.nombre.toLowerCase() === 'efectivo');
+      if (efectivo) {
+        setMetodoPago(efectivo.id_metodo_pago.toString());
+      }
+      inputBarrasRef.current?.focus();
+    } catch (error) {
+      console.error('Error al finalizar venta:', error);
+      console.error('Detalles del error:', error.response?.data);
+      console.error('Datos enviados:', ventaData);
+      const mensajeError = error.response?.data?.error || error.response?.data?.message || 'Error al registrar la venta';
+      toast.error(mensajeError);
+    }
+  };
+
+  const productosFiltrados = productos.filter(p =>
+    p.activo &&
+    (p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
+     p.codigo_barra?.includes(busquedaProducto) ||
+     p.categoria?.nombre?.toLowerCase().includes(busquedaProducto.toLowerCase()))
+  );
+
+  const irACierreCaja = () => {
+    if (onNavigate) {
+      onNavigate('cierre-caja');
+    }
+  };
+
+  if (verificandoCaja) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4c81] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verificando caja...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tieneCajaAbierta) {
+    return (
+      <div className="p-6">
+        <div className="max-w-2xl mx-auto mt-20">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No tienes una caja abierta</h2>
+            <p className="text-gray-700 mb-6">
+              Para realizar ventas, primero debes abrir una caja en el módulo de Cierre de Caja.
+            </p>
+            <button
+              onClick={irACierreCaja}
+              className="px-6 py-3 bg-[#0f4c81] text-white rounded-md hover:bg-[#0a3a61] transition-colors font-medium"
+            >
+              Ir a Cierre de Caja
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4c81] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Nueva Venta</h1>
+        <p className="text-gray-600 mt-2">Registrar venta con código de barras o búsqueda manual</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Columna Principal */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Card Escanear Código de Barras */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-[#f7fafc] border-b px-6 py-4">
+              <h2 className="text-lg font-semibold text-[#0f4c81] flex items-center gap-2">
+                <Barcode className="w-5 h-5" />
+                Escanear Código de Barras
+              </h2>
+            </div>
+            <div className="p-6">
+              <form onSubmit={handleCodigoBarras} className="flex gap-2">
+                <input
+                  ref={inputBarrasRef}
+                  type="text"
+                  value={codigoBarras}
+                  onChange={(e) => setCodigoBarras(e.target.value)}
+                  placeholder="Escanee o ingrese código de barras..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4c81] focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#0f4c81] text-white rounded-md hover:bg-[#0a3a61] transition-colors flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar
+                </button>
+              </form>
+              <div className="mt-4">
+                <button
+                  onClick={() => setMostrarBusqueda(!mostrarBusqueda)}
+                  className="w-full px-4 py-2 border border-[#0f4c81] text-[#0f4c81] rounded-md hover:bg-[#f7fafc] transition-colors flex items-center justify-center gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  Buscar producto manualmente
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Buscar Productos */}
+          {mostrarBusqueda && (
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="bg-[#f7fafc] border-b px-6 py-4 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-[#0f4c81]">Buscar Productos</h2>
+                <button
+                  onClick={() => setMostrarBusqueda(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-6">
+                <input
+                  type="text"
+                  value={busquedaProducto}
+                  onChange={(e) => setBusquedaProducto(e.target.value)}
+                  placeholder="Buscar por nombre, código o categoría..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4c81] focus:border-transparent mb-4"
+                />
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {productosFiltrados.map((producto) => (
+                    <div
+                      key={producto.id_producto}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        agregarProducto(producto);
+                        setBusquedaProducto('');
+                      }}
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{producto.nombre}</p>
+                        <p className="text-sm text-gray-600">{producto.categoria?.nombre || 'Sin categoría'}</p>
+                        <p className="text-xs text-gray-500">Stock: {producto.stock}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">L {parseFloat(producto.precio_venta).toFixed(2)}</p>
+                        <span className="text-xs px-2 py-1 bg-gray-100 border border-gray-300 rounded">
+                          {producto.codigo_barra}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {productosFiltrados.length === 0 && (
+                    <p className="text-center text-gray-500 py-4">No se encontraron productos</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Card Productos en Venta */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-[#f7fafc] border-b px-6 py-4">
+              <h2 className="text-lg font-semibold text-[#0f4c81] flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5" />
+                Productos en Venta
+              </h2>
+            </div>
+            <div className="p-6">
+              {items.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                  <p className="font-medium">No hay productos agregados</p>
+                  <p className="text-sm">Escanee un código de barras para comenzar</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {items.map((item) => (
+                    <div key={item.producto.id_producto} className="flex items-center gap-4 p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{item.producto.nombre}</p>
+                        <p className="text-sm text-gray-600">L {parseFloat(item.producto.precio_venta).toFixed(2)} c/u</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => actualizarCantidad(item.producto.id_producto, item.cantidad - 1)}
+                          className="w-8 h-8 border border-gray-300 rounded hover:bg-gray-100 flex items-center justify-center"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          value={item.cantidad}
+                          onChange={(e) => actualizarCantidad(item.producto.id_producto, parseInt(e.target.value) || 0)}
+                          className="w-16 text-center px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#0f4c81]"
+                          min="1"
+                          max={item.producto.stock}
+                        />
+                        <button
+                          onClick={() => actualizarCantidad(item.producto.id_producto, item.cantidad + 1)}
+                          className="w-8 h-8 border border-gray-300 rounded hover:bg-gray-100 flex items-center justify-center"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="w-24 text-right">
+                        <p className="font-semibold text-gray-900">L {item.subtotal.toFixed(2)}</p>
+                      </div>
+                      <button
+                        onClick={() => eliminarItem(item.producto.id_producto)}
+                        className="text-red-600 hover:text-red-800 p-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Columna Lateral - Información de Venta */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-[#f7fafc] border-b px-6 py-4">
+              <h2 className="text-lg font-semibold text-[#0f4c81]">Información de Venta</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Cliente */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cliente (Opcional)
+                </label>
+                <select
+                  value={clienteSeleccionado}
+                  onChange={(e) => setClienteSeleccionado(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4c81] focus:border-transparent"
+                >
+                  <option value="">Cliente General</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id_cliente} value={cliente.id_cliente}>
+                      {cliente.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Método de Pago */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Método de Pago
+                </label>
+                <select
+                  value={metodoPago}
+                  onChange={(e) => setMetodoPago(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4c81] focus:border-transparent"
+                >
+                  <option value="">Seleccionar método</option>
+                  {metodosPago.filter(m => m.activo).map((metodo) => (
+                    <option key={metodo.id_metodo_pago} value={metodo.id_metodo_pago}>
+                      {metodo.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Vendedor */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vendedor
+                </label>
+                <input
+                  type="text"
+                  value={user?.nombre || ''}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+                />
+              </div>
+
+              {/* Separador */}
+              <hr className="my-4" />
+
+              {/* Totales */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-gray-700">
+                  <span>Subtotal:</span>
+                  <span className="font-medium">L {calcularTotal().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-700">
+                  <span>ISV (15%):</span>
+                  <span className="font-medium">L {(calcularTotal() * 0.15).toFixed(2)}</span>
+                </div>
+                <hr className="my-2" />
+                <div className="flex justify-between text-lg font-bold text-gray-900">
+                  <span>Total:</span>
+                  <span>L {(calcularTotal() * 1.15).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="space-y-2 pt-4">
+                <button
+                  onClick={finalizarVenta}
+                  disabled={items.length === 0}
+                  className="w-full px-4 py-3 bg-[#0f4c81] text-white rounded-md hover:bg-[#0a3a61] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Printer className="w-4 h-4" />
+                  Finalizar y Imprimir
+                </button>
+                <button
+                  onClick={() => {
+                    setItems([]);
+                    setClienteSeleccionado('');
+                    const efectivo = metodosPago.find(m => m.nombre.toLowerCase() === 'efectivo');
+                    if (efectivo) {
+                      setMetodoPago(efectivo.id_metodo_pago.toString());
+                    }
+                    inputBarrasRef.current?.focus();
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar Venta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
+    </div>
+  );
+}

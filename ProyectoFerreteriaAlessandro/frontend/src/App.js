@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
+import { DashboardHome } from './components/DashboardHome';
 import { Productos } from './components/Productos';
+import { Reportes } from './components/Reportes';
+import { CierreCaja } from './components/CierreCaja';
+import { AlertasStock } from './components/AlertasStock';
+import { RegistroCompras } from './components/RegistroCompras';
+import { Usuarios } from './components/Usuarios';
+import { NuevaVenta } from './components/NuevaVenta';
 import { authService } from './services/authService';
 import './App.css';
 
@@ -43,14 +49,9 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <Dashboard />;
+        return <DashboardHome user={user} />;
       case 'nueva-venta':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Nueva Venta</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <NuevaVenta user={user} onNavigate={setCurrentView} />;
       case 'devoluciones':
         return (
           <div className="p-6">
@@ -59,42 +60,17 @@ function App() {
           </div>
         );
       case 'cierre-caja':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Cierre de Caja</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <CierreCaja user={user} />;
       case 'productos':
         return <Productos user={user} />;
       case 'registro-compras':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Registro de Compras</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <RegistroCompras user={user} />;
       case 'alertas-stock':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Alertas de Stock</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <AlertasStock />;
       case 'reportes':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Reportes</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Reportes user={user} />;
       case 'usuarios':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Usuarios</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Usuarios user={user} />;
       case 'configuracion':
         return (
           <div className="p-6">
@@ -103,7 +79,7 @@ function App() {
           </div>
         );
       default:
-        return <Dashboard />;
+        return <DashboardHome user={user} />;
     }
   };
 

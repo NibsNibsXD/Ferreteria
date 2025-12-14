@@ -37,6 +37,14 @@ export const alertasService = {
   getProductosBajoStock: () => api.get('/alertas/productos-bajo-stock'),
 };
 
+export const compraService = {
+  getAll: (params) => api.get('/compras', { params }),
+  getById: (id) => api.get(`/compras/${id}`),
+  create: (data) => api.post('/compras', data),
+  update: (id, data) => api.put(`/compras/${id}`, data),
+  delete: (id) => api.delete(`/compras/${id}`),
+};
+
 export const rolService = {
   getAll: () => api.get('/roles'),
   getById: (id) => api.get(`/roles/${id}`),
@@ -45,11 +53,37 @@ export const rolService = {
   delete: (id) => api.delete(`/roles/${id}`),
 };
 
+export const clienteService = {
+  getAll: () => api.get('/clientes'),
+  getById: (id) => api.get(`/clientes/${id}`),
+  create: (data) => api.post('/clientes', data),
+  update: (id, data) => api.put(`/clientes/${id}`, data),
+};
+
+export const metodoPagoService = {
+  getAll: () => api.get('/metodos-pago'),
+  getById: (id) => api.get(`/metodos-pago/${id}`),
+  create: (data) => api.post('/metodos-pago', data),
+  update: (id, data) => api.put(`/metodos-pago/${id}`, data),
+};
+
+export const cajaService = {
+  getAll: () => api.get('/cajas'),
+  getById: (id) => api.get(`/cajas/${id}`),
+  create: (data) => api.post('/cajas', data),
+  update: (id, data) => api.put(`/cajas/${id}`, data),
+  getCierresByCaja: (id) => api.get(`/cajas/${id}/cierres`),
+};
+
 export default {
   usuario: usuarioService,
   sucursal: sucursalService,
   producto: productoService,
   venta: ventaService,
   alertas: alertasService,
+  compra: compraService,
   rol: rolService,
+  cliente: clienteService,
+  metodoPago: metodoPagoService,
+  caja: cajaService,
 };

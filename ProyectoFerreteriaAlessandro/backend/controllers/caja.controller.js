@@ -9,6 +9,7 @@ const getAllCajas = async (req, res) => {
     const cajas = await cajaService.getAllCajas();
     res.json({ success: true, data: cajas });
   } catch (error) {
+    console.error('Error en getAllCajas:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -22,6 +23,7 @@ const getCajaById = async (req, res) => {
     const caja = await cajaService.getCajaById(req.params.id);
     res.json({ success: true, data: caja });
   } catch (error) {
+    console.error('Error en getCajaById:', error);
     const statusCode = error.message === 'Caja no encontrada' ? 404 : 500;
     res.status(statusCode).json({ success: false, error: error.message });
   }
@@ -36,6 +38,7 @@ const createCaja = async (req, res) => {
     const nuevaCaja = await cajaService.createCaja(req.body);
     res.status(201).json({ success: true, message: 'Caja creada exitosamente', data: nuevaCaja });
   } catch (error) {
+    console.error('Error en createCaja:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -49,6 +52,7 @@ const updateCaja = async (req, res) => {
     const cajaActualizada = await cajaService.updateCaja(req.params.id, req.body);
     res.json({ success: true, message: 'Caja actualizada exitosamente', data: cajaActualizada });
   } catch (error) {
+    console.error('Error en updateCaja:', error);
     const statusCode = error.message === 'Caja no encontrada' ? 404 : 500;
     res.status(statusCode).json({ success: false, error: error.message });
   }

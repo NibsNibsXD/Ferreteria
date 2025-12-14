@@ -60,6 +60,7 @@ const getAllProductsConStockMinimo = async ({ limit } = {}) => {
     const productosConEstado = productos.map(p => ({
       id_producto: p.id_producto,
       nombre: p.nombre,
+      codigo_barra: p.codigo_barra,
       stock: p.stock,
       stock_minimo: p.stock_minimo,
       diferencia: p.stock_minimo - p.stock,
