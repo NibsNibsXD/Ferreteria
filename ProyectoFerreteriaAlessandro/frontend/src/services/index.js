@@ -75,6 +75,12 @@ export const cajaService = {
   getCierresByCaja: (id) => api.get(`/cajas/${id}/cierres`),
 };
 
+export const devolucionService = {
+  crear: (data) => api.post('/devoluciones', data),
+  getByVenta: (id_venta) => api.get(`/devoluciones/venta/${id_venta}`),
+  getAll: () => api.get('/devoluciones'),
+};
+
 export default {
   usuario: usuarioService,
   sucursal: sucursalService,
@@ -86,4 +92,5 @@ export default {
   cliente: clienteService,
   metodoPago: metodoPagoService,
   caja: cajaService,
+  devolucion: devolucionService,
 };

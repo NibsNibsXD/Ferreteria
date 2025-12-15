@@ -56,19 +56,12 @@ function App() {
     switch (currentView) {
       case 'home':
         return <DashboardHome user={user} />;
-        return <Dashboard user={user} />;
       case 'nueva-venta':
         return <NuevaVenta user={user} onNavigate={setCurrentView} />;
       case 'devoluciones':
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Devoluciones</h1>
-            <p className="text-gray-600 mt-2">Funcionalidad en desarrollo...</p>
-          </div>
-        );
+        return <Devoluciones user={user} />;
       case 'perfil':
         return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
-        return <Devoluciones user={user} />;
       case 'cierre-caja':
         return <CierreCaja user={user} />;
       case 'productos':
@@ -85,7 +78,6 @@ function App() {
         return <Perfil user={user} onUpdateUser={handleUserUpdate} />;
       default:
         return <DashboardHome user={user} />;
-        return <Dashboard user={user} />;
     }
   };
 

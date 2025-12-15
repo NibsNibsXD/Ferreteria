@@ -59,19 +59,28 @@ const navItems = [
     id: 'reportes',
     label: 'Reportes',
     icon: BarChart3,
+    requiredPermission: 'reportes',
   },
   {
     id: 'usuarios',
     label: 'Usuarios',
     icon: Users,
-    adminOnly: true,
+    requiredPermission: 'usuarios',
   },
 ];
 
 export function Sidebar({ user, currentView, onViewChange, isOpen }) {
-  const filteredItems = navItems.filter(
-    (item) => !item.adminOnly || user.rol?.nombre === 'Administrador' || user.rol === 'Administrador'
-  );
+  // Obtener permisos del usuario
+  const userPermissions = user.rol?.permisos || [];
+  
+  const filteredItems = navItems.filter((item) => {
+    // Si el item requiere un permiso específico, verificar que el usuario lo tenga
+    if (item.requiredPermission) {
+      return userPermissions.includes(item.requiredPermission);
+    }
+    // Si no requiere permiso específico, mostrarlo
+    return true;
+  });
 
   let lastSection = '';
 
