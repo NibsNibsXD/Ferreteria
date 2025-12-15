@@ -16,6 +16,7 @@ export function CierreCaja({ user }) {
   const [ventasHoy, setVentasHoy] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mostrarModalAsignarCaja, setMostrarModalAsignarCaja] = useState(false);
+  const [fechaInicioCaja, setFechaInicioCaja] = useState(null); // Hora cuando se asignó la caja
 
   // Función auxiliar para convertir a número
   const toNumber = (value) => {
@@ -49,6 +50,17 @@ export function CierreCaja({ user }) {
     cargarDatos();
   }, []);
 
+  // Recargar ventas automáticamente cada 5 segundos si hay caja asignada
+  useEffect(() => {
+    if (cajaSeleccionada && fechaInicioCaja) {
+      const interval = setInterval(() => {
+        cargarVentasDelDia();
+      }, 5000); // 5 segundos
+
+      return () => clearInterval(interval);
+    }
+  }, [cajaSeleccionada, fechaInicioCaja]);
+
   const cargarDatos = async () => {
     try {
       setLoading(true);
@@ -68,8 +80,38 @@ export function CierreCaja({ user }) {
         setCajaAsignadaUsuario(cajaUsuario);
         setCajaSeleccionada(cajaUsuario);
         setSaldoInicial(toNumber(cajaUsuario.saldo_inicial) || 1000.00);
-        // Cargar ventas solo si tiene caja asignada
-        await cargarVentasDelDia();
+        
+        // Buscar el último cierre de esta caja específica
+        try {
+          const cierres = await cierreService.getAll();
+          const cierresCaja = cierres.filter(c => c.id_caja === cajaUsuario.id_caja);
+          
+          if (cierresCaja.length > 0) {
+            // Ordenar por fecha descendente y tomar el más reciente
+            cierresCaja.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            const ultimoCierre = cierresCaja[0];
+            const fechaUltimoCierre = new Date(ultimoCierre.fecha).toISOString();
+            console.log('Último cierre encontrado:', ultimoCierre, 'Fecha:', fechaUltimoCierre);
+            setFechaInicioCaja(fechaUltimoCierre);
+            await cargarVentasDelDia(fechaUltimoCierre);
+          } else {
+            // No hay cierres previos, usar el inicio del día
+            const inicioDia = new Date();
+            inicioDia.setHours(0, 0, 0, 0);
+            const fechaInicioDia = inicioDia.toISOString();
+            console.log('No hay cierres previos, usando inicio del día:', fechaInicioDia);
+            setFechaInicioCaja(fechaInicioDia);
+            await cargarVentasDelDia(fechaInicioDia);
+          }
+        } catch (error) {
+          console.error('Error al buscar cierres:', error);
+          // Si hay error, cargar ventas del día
+          const inicioDia = new Date();
+          inicioDia.setHours(0, 0, 0, 0);
+          const fechaInicioDia = inicioDia.toISOString();
+          setFechaInicioCaja(fechaInicioDia);
+          await cargarVentasDelDia(fechaInicioDia);
+        }
       } else {
         // Si no tiene caja asignada, mostrar modal para seleccionar
         setMostrarModalAsignarCaja(true);
@@ -86,17 +128,33 @@ export function CierreCaja({ user }) {
     }
   };
 
-  const cargarVentasDelDia = async () => {
+  const cargarVentasDelDia = async (fechaInicio = null) => {
     try {
       const ventas = await ventaService.getAll();
-      console.log('Ventas cargadas desde backend:', ventas); // Debug
-      const today = new Date().toISOString().split('T')[0];
-      const ventasDelDia = ventas.filter(v => {
-        const fechaVenta = new Date(v.fecha).toISOString().split('T')[0];
-        return fechaVenta === today;
+      
+      // Usar la fecha de inicio pasada o la guardada en el estado
+      const fechaInicioSesion = fechaInicio || fechaInicioCaja;
+      
+      if (!fechaInicioSesion) {
+        console.log('No hay fecha de inicio de sesión');
+        setVentasHoy([]);
+        return;
+      }
+
+      console.log('Todas las ventas:', ventas); // Debug
+      console.log('Fecha inicio de sesión:', fechaInicioSesion); // Debug
+      
+      // Filtrar solo las ventas posteriores a la fecha de inicio
+      const ventasDeSesion = ventas.filter(v => {
+        const fechaVenta = new Date(v.fecha);
+        const fechaInicio = new Date(fechaInicioSesion);
+        
+        // Solo incluir ventas DESPUÉS de la fecha de inicio (último cierre o asignación de caja)
+        return fechaVenta > fechaInicio;
       });
-      console.log('Ventas del día:', ventasDelDia); // Debug
-      setVentasHoy(ventasDelDia);
+      
+      console.log('Ventas desde la apertura/último cierre:', ventasDeSesion); // Debug
+      setVentasHoy(ventasDeSesion);
     } catch (error) {
       console.error('Error al cargar ventas:', error);
     }
@@ -146,12 +204,23 @@ export function CierreCaja({ user }) {
       );
       setCajas(cajasActualizadas);
 
-      setCajaAsignadaUsuario({ ...caja, id_usuario: user.id_usuario });
-      setCajaSeleccionada({ ...caja, id_usuario: user.id_usuario });
+      const cajaConUsuario = { ...caja, id_usuario: user.id_usuario };
+      const fechaApertura = new Date().toISOString(); // Marcar hora actual como inicio de sesión
+      
+      setCajaAsignadaUsuario(cajaConUsuario);
+      setCajaSeleccionada(cajaConUsuario);
       setSaldoInicial(toNumber(caja.saldo_inicial) || 1000.00);
+      setEfectivoContado(''); // Resetear efectivo contado
+      setVentasHoy([]); // Limpiar ventas anteriores
+      setFechaInicioCaja(fechaApertura); // Guardar hora de inicio
       setMostrarModalAsignarCaja(false);
-      await cargarVentasDelDia();
-      alert('Caja asignada exitosamente. La información se ha guardado.');
+      
+      console.log('Caja abierta a las:', fechaApertura); // Debug
+      
+      // Cargar ventas pasando la fecha de inicio
+      await cargarVentasDelDia(fechaApertura);
+      
+      alert('Caja asignada exitosamente. Solo se contarán las ventas desde este momento.');
     } catch (error) {
       console.error('Error al asignar caja:', error);
       alert('Error al asignar la caja. Por favor intente nuevamente.');
@@ -218,11 +287,19 @@ export function CierreCaja({ user }) {
 
       alert('Cierre de caja realizado exitosamente. Caja liberada y guardada en la base de datos.');
       
-      // Resetear estados
+      // Preguntar si desea imprimir/descargar el reporte
+      const imprimirCopia = window.confirm('¿Desea imprimir o descargar una copia del reporte de cierre?');
+      if (imprimirCopia) {
+        imprimirReporte();
+      }
+      
+      // Resetear estados completamente
       setCajaAsignadaUsuario(null);
       setCajaSeleccionada(null);
       setEfectivoContado('');
       setVentasHoy([]);
+      setSaldoInicial(1000.00); // Resetear al valor por defecto
+      setFechaInicioCaja(null); // Limpiar fecha de inicio
       
       // Recargar cajas y mostrar modal para seleccionar nueva caja
       await cargarDatos();
@@ -230,6 +307,103 @@ export function CierreCaja({ user }) {
       console.error('Error al realizar cierre:', error);
       alert('Error al realizar el cierre de caja');
     }
+  };
+
+  const imprimirReporte = () => {
+    const ventanaImpresion = window.open('', '', 'width=800,height=600');
+    const fecha = new Date().toLocaleString();
+    
+    ventanaImpresion.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Reporte de Cierre de Caja</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #0f4c81; padding-bottom: 10px; margin-bottom: 20px; }
+            .header h1 { color: #0f4c81; margin: 0; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #0f4c81; color: white; }
+            .total-row { font-weight: bold; background-color: #f0f0f0; }
+            @media print { button { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Ferretería Alessandro</h1>
+            <h2>Reporte de Cierre de Caja</h2>
+            <p>${fecha}</p>
+            <p>Caja: ${cajaSeleccionada?.nombre || 'N/A'}</p>
+            <p>Usuario: ${user?.nombre || 'N/A'}</p>
+          </div>
+          
+          <h3>Resumen de Ventas</h3>
+          <table>
+            <tr>
+              <th>Método de Pago</th>
+              <th>Cantidad</th>
+              <th>Total</th>
+            </tr>
+            <tr>
+              <td>Efectivo</td>
+              <td>${ventasEfectivo.length}</td>
+              <td>L ${ventasEfectivo.reduce((sum, v) => sum + toNumber(v.total), 0).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Tarjeta</td>
+              <td>${ventasTarjeta.length}</td>
+              <td>L ${ventasTarjeta.reduce((sum, v) => sum + toNumber(v.total), 0).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Transferencia</td>
+              <td>${ventasTransferencia.length}</td>
+              <td>L ${ventasTransferencia.reduce((sum, v) => sum + toNumber(v.total), 0).toFixed(2)}</td>
+            </tr>
+            <tr class="total-row">
+              <td>TOTAL VENTAS</td>
+              <td>${ventasHoy.length}</td>
+              <td>L ${totalVentas.toFixed(2)}</td>
+            </tr>
+          </table>
+          
+          <h3>Arqueo de Caja</h3>
+          <table>
+            <tr><td>Saldo Inicial</td><td>L ${saldoInicialNum.toFixed(2)}</td></tr>
+            <tr><td>Ventas en Efectivo</td><td>L ${ventasEfectivo.reduce((sum, v) => sum + toNumber(v.total), 0).toFixed(2)}</td></tr>
+            <tr><td>Efectivo Esperado</td><td>L ${efectivoEsperado.toFixed(2)}</td></tr>
+            <tr><td>Efectivo Contado</td><td>L ${toNumber(efectivoContado).toFixed(2)}</td></tr>
+            <tr class="total-row">
+              <td>Diferencia</td>
+              <td style="color: ${diferencia < 0 ? 'red' : diferencia > 0 ? 'green' : 'black'}">
+                L ${diferencia.toFixed(2)}
+              </td>
+            </tr>
+          </table>
+          
+          <div style="margin-top: 40px; text-align: center;">
+            <button onclick="window.print()" style="padding: 10px 20px; background: #0f4c81; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Imprimir</button>
+            <button onclick="descargarReporte()" style="padding: 10px 20px; background: #16a34a; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Descargar</button>
+            <button onclick="window.close()" style="padding: 10px 20px; background: #666; color: white; border: none; border-radius: 5px; cursor: pointer;">Cerrar</button>
+          </div>
+          <script>
+            function descargarReporte() {
+              const contenido = document.documentElement.outerHTML;
+              const blob = new Blob([contenido], { type: 'text/html' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'Cierre_Caja_${cajaSeleccionada?.nombre || 'N/A'}_${new Date().toLocaleDateString().split('/').join('-')}.html';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    ventanaImpresion.document.close();
   };
 
   // Cálculos
@@ -467,7 +641,10 @@ export function CierreCaja({ user }) {
                 <Save className="w-5 h-5" />
                 Guardar Cierre de Caja
               </button>
-              <button className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-[#0f4c81] text-[#0f4c81] rounded-lg hover:bg-[#f7fafc] transition-colors font-semibold">
+              <button 
+                onClick={imprimirReporte}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-[#0f4c81] text-[#0f4c81] rounded-lg hover:bg-[#f7fafc] transition-colors font-semibold"
+              >
                 <Printer className="w-5 h-5" />
                 Imprimir Reporte
               </button>

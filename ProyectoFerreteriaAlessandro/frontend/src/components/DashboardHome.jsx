@@ -24,8 +24,6 @@ export function DashboardHome({ user }) {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      console.log('Cargando datos del dashboard...');
-
       // Cargar datos en paralelo
       const results = await Promise.allSettled([
         dashboardService.getProductosActivosCount(),
@@ -35,8 +33,6 @@ export function DashboardHome({ user }) {
         dashboardService.getProductosBajoStock()
       ]);
 
-      console.log('Resultados:', results);
-
       const [
         productosActivosRes,
         valorInventarioRes,
@@ -44,12 +40,6 @@ export function DashboardHome({ user }) {
         ventasRecientesRes,
         productosBajoStockRes
       ] = results;
-
-      console.log('Productos activos:', JSON.stringify(productosActivosRes, null, 2));
-      console.log('Valor inventario:', JSON.stringify(valorInventarioRes, null, 2));
-      console.log('Ventas hoy:', JSON.stringify(ventasRes, null, 2));
-      console.log('Ventas recientes:', JSON.stringify(ventasRecientesRes, null, 2));
-      console.log('Productos bajo stock:', JSON.stringify(productosBajoStockRes, null, 2));
 
       // Filtrar ventas de hoy localmente
       const todasVentasData = ventasRes.status === 'fulfilled' ? ventasRes.value : {};
@@ -85,13 +75,10 @@ export function DashboardHome({ user }) {
         productosStockBajo: productosBajoStock.slice(0, 5)
       };
 
-      console.log('Dashboard data final:', JSON.stringify(newData, null, 2));
-
       setDashboardData(newData);
-
-      console.log('Datos cargados exitosamente');
     } catch (error) {
-      console.error('Error al cargar datos del dashboard:', error);
+      // Puedes dejar este error si quieres ver errores reales
+      // console.error('Error al cargar datos del dashboard:', error);
     } finally {
       setLoading(false);
     }

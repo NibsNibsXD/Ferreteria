@@ -24,54 +24,77 @@ const navItems = [
     label: 'Nueva Venta',
     icon: ShoppingCart,
     section: 'Ventas',
+    requiredPermission: 'nueva-venta',
   },
   {
     id: 'devoluciones',
     label: 'Devoluciones',
     icon: RotateCcw,
     section: 'Ventas',
+    requiredPermission: 'devoluciones',
   },
   {
     id: 'cierre-caja',
     label: 'Cierre de Caja',
     icon: DollarSign,
     section: 'Ventas',
+    requiredPermission: 'cierre-caja',
   },
   {
     id: 'productos',
     label: 'Productos',
     icon: Package,
     section: 'Inventario',
+    requiredPermission: 'productos',
   },
   {
     id: 'registro-compras',
     label: 'Registro de Compras',
     icon: ShoppingBag,
     section: 'Inventario',
+    requiredPermission: 'registro-compras',
   },
   {
     id: 'alertas-stock',
     label: 'Alertas de Stock',
     icon: AlertTriangle,
     section: 'Inventario',
+    requiredPermission: 'alertas-stock',
   },
   {
     id: 'reportes',
     label: 'Reportes',
     icon: BarChart3,
+    section: 'Administración',
+    requiredPermission: 'reportes',
   },
   {
     id: 'usuarios',
     label: 'Usuarios',
     icon: Users,
-    adminOnly: true,
+    section: 'Administración',
+    requiredPermission: 'usuarios',
   },
 ];
 
 export function Sidebar({ user, currentView, onViewChange, isOpen }) {
-  const filteredItems = navItems.filter(
-    (item) => !item.adminOnly || user.rol?.nombre === 'Administrador' || user.rol === 'Administrador'
-  );
+  // Obtener permisos del usuario
+  const userPermissions = user?.rol?.permisos || [];
+  
+  const filteredItems = navItems.filter((item) => {
+    // Dashboard siempre visible
+    if (item.id === 'home') {
+      return true;
+    }
+    
+    // Si el item requiere un permiso específico, verificar que el usuario lo tenga
+    if (item.requiredPermission) {
+      return userPermissions.includes(item.requiredPermission);
+    }
+    
+    // Si no requiere permiso específico, mostrarlo
+    return true;
+  });
 
   let lastSection = '';
 

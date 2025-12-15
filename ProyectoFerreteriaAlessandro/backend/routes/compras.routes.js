@@ -21,9 +21,9 @@ router.get('/:id', authenticateToken, compraController.getCompraById);
 /**
  * Registrar una nueva compra
  * POST /api/compras
- * Requiere autenticación y rol de administrador
+ * Requiere autenticación (empleados pueden registrar compras)
  */
-router.post('/', authenticateToken, authorizeRoles(1), compraController.createCompra);
+router.post('/', authenticateToken, compraController.createCompra);
 
 /**
  * Actualizar una compra

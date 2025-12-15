@@ -20,9 +20,9 @@ router.get('/:id', authenticateToken, cierreController.getCierreById);
 /**
  * Crear un cierre de caja
  * POST /api/cierres
- * Requiere autenticación y rol de administrador
+ * Requiere autenticación (empleados y administradores pueden crear cierres)
  */
-router.post('/', authenticateToken, authorizeRoles(1), cierreController.createCierre);
+router.post('/', authenticateToken, cierreController.createCierre);
 
 /**
  * Actualizar un cierre

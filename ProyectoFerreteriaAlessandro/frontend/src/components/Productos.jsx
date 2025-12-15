@@ -23,6 +23,9 @@ export function Productos({ user }) {
   const [agregandoCategoria, setAgregandoCategoria] = useState(false);
   const [mostrarInputCategoria, setMostrarInputCategoria] = useState(false);
 
+  // Verificar si el usuario puede crear/editar productos
+  const puedeEditarProductos = user?.rol?.nombre === 'Administrador' || user?.rol === 'Administrador';
+
   useEffect(() => {
     cargarProductos();
     cargarCategorias();
@@ -135,13 +138,15 @@ export function Productos({ user }) {
           <h1 className="text-2xl font-bold text-[#0f4c81]">Gestión de Productos</h1>
           <p className="text-gray-600">Inventario completo de la ferretería</p>
         </div>
-        <button
-          onClick={() => setDialogAbierto(true)}
-          className="flex items-center gap-2 bg-[#0f4c81] hover:bg-[#0a3a61] text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nuevo Producto
-        </button>
+        {puedeEditarProductos && (
+          <button
+            onClick={() => setDialogAbierto(true)}
+            className="flex items-center gap-2 bg-[#0f4c81] hover:bg-[#0a3a61] text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Producto
+          </button>
+        )}
       </div>
 
       {/* Dialog para agregar producto */}
@@ -425,9 +430,13 @@ export function Productos({ user }) {
                       </span>
                     </td>
                     <td className="text-center p-3">
-                      <button className="p-2 text-[#0f4c81] hover:bg-[#f7fafc] rounded-md transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      {puedeEditarProductos ? (
+                        <button className="p-2 text-[#0f4c81] hover:bg-[#f7fafc] rounded-md transition-colors">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Solo lectura</span>
+                      )}
                     </td>
                   </tr>
                 ))}
