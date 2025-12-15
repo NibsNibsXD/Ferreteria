@@ -45,7 +45,7 @@ const getCierreById = async (id) => {
  */
 const createCierre = async (data) => {
   try {
-    const { id_usuario, id_caja, saldo_inicial, total_ventas, total_devoluciones, total_neto } = data;
+    const { id_usuario, id_caja, saldo_inicial, total_ventas, total_devoluciones, total_neto, efectivo_esperado, efectivo_contado, diferencia } = data;
 
     if (!id_caja) {
       throw new Error('El id_caja es requerido');
@@ -72,7 +72,10 @@ const createCierre = async (data) => {
       saldo_inicial: saldo_inicial !== undefined ? saldo_inicial : caja.saldo_inicial || 0,
       total_ventas: total_ventas !== undefined ? total_ventas : 0,
       total_devoluciones: total_devoluciones !== undefined ? total_devoluciones : 0,
-      total_neto: total_neto !== undefined ? total_neto : null
+      total_neto: total_neto !== undefined ? total_neto : null,
+      efectivo_esperado: efectivo_esperado !== undefined ? efectivo_esperado : null,
+      efectivo_contado: efectivo_contado !== undefined ? efectivo_contado : null,
+      diferencia: diferencia !== undefined ? diferencia : null
     });
 
     return nuevoCierre;

@@ -235,12 +235,17 @@ export function NuevaVenta({ user, onNavigate }) {
       // Guardar datos de la venta para impresión
       const clienteNombre = clientes.find(c => c.id_cliente === parseInt(clienteSeleccionado))?.nombre || 'Consumidor Final';
       const metodoPagoNombre = metodosPago.find(m => m.id_metodo_pago === parseInt(metodoPago))?.nombre || 'N/A';
+      const subtotal = calcularTotal();
+      const impuesto = subtotal * 0.15;
+      const totalConImpuesto = subtotal * 1.15;
       
       setVentaFinalizada({
-        codigoFactura,
+        codigo_factura: codigoFactura,
         items: [...items],
-        total: calcularTotal(),
-        totalConImpuesto: calcularTotal() * 1.15,
+        subtotal: subtotal,
+        impuesto: impuesto,
+        total: totalConImpuesto,
+        totalConImpuesto: totalConImpuesto,
         cliente: clienteNombre,
         metodoPago: metodoPagoNombre,
         fecha: new Date(),
@@ -272,7 +277,7 @@ export function NuevaVenta({ user, onNavigate }) {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Factura - ${ventaFinalizada.codigoFactura}</title>
+          <title>Factura - ${ventaFinalizada.codigo_factura}</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -332,7 +337,7 @@ export function NuevaVenta({ user, onNavigate }) {
           <div class="header">
             <h1>Ferretería Alessandro</h1>
             <h2>Factura de Venta</h2>
-            <p><strong>${ventaFinalizada.codigoFactura}</strong></p>
+            <p><strong>${ventaFinalizada.codigo_factura}</strong></p>
           </div>
           
           <div class="info-section">
@@ -360,17 +365,17 @@ export function NuevaVenta({ user, onNavigate }) {
                 <tr>
                   <td>${item.producto.nombre}</td>
                   <td>${item.cantidad}</td>
-                  <td>L ${item.producto.precio_venta.toFixed(2)}</td>
-                  <td>L ${item.subtotal.toFixed(2)}</td>
+                  <td>L ${parseFloat(item.producto.precio_venta).toFixed(2)}</td>
+                  <td>L ${parseFloat(item.subtotal).toFixed(2)}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
                 <td colspan="3">Subtotal:</td>
-                <td>L ${ventaFinalizada.total.toFixed(2)}</td>
+                <td>L ${ventaFinalizada.subtotal.toFixed(2)}</td>
               </tr>
               <tr class="total-row">
                 <td colspan="3">Impuesto (15%):</td>
-                <td>L ${(ventaFinalizada.total * 0.15).toFixed(2)}</td>
+                <td>L ${ventaFinalizada.impuesto.toFixed(2)}</td>
               </tr>
               <tr class="total-row">
                 <td colspan="3">TOTAL:</td>

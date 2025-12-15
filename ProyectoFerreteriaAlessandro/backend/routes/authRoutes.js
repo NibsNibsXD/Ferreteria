@@ -101,7 +101,7 @@ router.post('/login', async (req, res) => {
         {
           model: db.Rol,
           as: 'rol',
-          attributes: ['id_rol', 'nombre']
+          attributes: ['id_rol', 'nombre', 'permisos']
         },
         {
           model: db.Sucursal,
@@ -153,7 +153,8 @@ router.post('/login', async (req, res) => {
       fecha_creacion: usuario.fecha_creacion,
       rol: usuario.rol ? {
         id_rol: usuario.rol.id_rol,
-        nombre: usuario.rol.nombre
+        nombre: usuario.rol.nombre,
+        permisos: usuario.rol.permisos
       } : null,
       sucursal: usuario.sucursal ? {
         id_sucursal: usuario.sucursal.id_sucursal,

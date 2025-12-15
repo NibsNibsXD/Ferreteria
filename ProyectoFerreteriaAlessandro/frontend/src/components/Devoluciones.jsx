@@ -185,6 +185,18 @@ export function Devoluciones({ user }) {
   const totalDevuelto = calcularTotal(productosDevueltos);
   const totalCambio = calcularTotal(productosCambio);
   const diferencia = totalCambio - totalDevuelto;
+  
+  // Debug logs
+  console.log('Estado del botón:', {
+    procesando,
+    productosDevueltosCount: productosDevueltos.length,
+    productosCambioCount: productosCambio.length,
+    totalDevuelto,
+    totalCambio,
+    diferencia,
+    diferenciaAbs: Math.abs(diferencia),
+    botonDeshabilitado: procesando || productosDevueltos.length === 0 || productosCambio.length === 0 || Math.abs(diferencia) > 0.01
+  });
 
   const procesarDevolucion = async () => {
     if (!ventaEncontrada) return;
