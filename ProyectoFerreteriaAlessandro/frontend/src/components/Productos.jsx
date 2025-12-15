@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit, Search, Barcode } from 'lucide-react';
 import { productoService } from '../services';
+import Notificacion from './Notificacion';
+import { useNotificacion } from '../hooks/useNotificacion';
 
 export function Productos({ user }) {
+  const { notificaciones, cerrarNotificacion, mostrarExito, mostrarError } = useNotificacion();
   const [busqueda, setBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   const [dialogAbierto, setDialogAbierto] = useState(false);
@@ -70,7 +73,7 @@ export function Productos({ user }) {
   const guardarProducto = async () => {
     try {
       await productoService.create(formData);
-      alert('Producto guardado exitosamente');
+      mostrarExito('Producto guardado exitosamente');
       setDialogAbierto(false);
       cargarProductos();
       setFormData({
@@ -85,7 +88,7 @@ export function Productos({ user }) {
       });
     } catch (error) {
       console.error('Error al guardar producto:', error);
-      alert('Error al guardar producto');
+      mostrarError('Error al guardar producto');
     }
   };
 
@@ -106,12 +109,12 @@ export function Productos({ user }) {
         await cargarCategorias(); // Refresca la lista desde el backend
         setFormData(prev => ({ ...prev, id_categoria: data.data.id_categoria }));
         setNuevaCategoria('');
-        alert('Categoría agregada exitosamente');
+        mostrarExito('Categoría agregada exitosamente');
       } else {
-        alert('Error al agregar categoría');
+        mostrarError('Error al agregar categoría');
       }
     } catch (error) {
-      alert('Error al agregar categoría');
+      mostrarError('Error al agregar categoría');
     } finally {
       setAgregandoCategoria(false);
     }
@@ -445,6 +448,17 @@ export function Productos({ user }) {
           </div>
         </div>
       </div>
+
+      {/* Notificaciones */}
+      {notificaciones.map(notif => (
+        <Notificacion
+          key={notif.id}
+          tipo={notif.tipo}
+          mensaje={notif.mensaje}
+          duracion={notif.duracion}
+          onClose={() => cerrarNotificacion(notif.id)}
+        />
+      ))}
     </div>
   );
 }

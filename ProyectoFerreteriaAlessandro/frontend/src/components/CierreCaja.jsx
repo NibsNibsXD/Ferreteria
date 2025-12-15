@@ -4,8 +4,12 @@ import cajaService from '../services/cajaService';
 import cierreService from '../services/cierreService';
 import ventaService from '../services/ventaService';
 import sucursalService from '../services/sucursalService';
+import Notificacion from './Notificacion';
+import ModalConfirmacion from './ModalConfirmacion';
+import { useNotificacion } from '../hooks/useNotificacion';
 
 export function CierreCaja({ user }) {
+  const { notificaciones, cerrarNotificacion, mostrarExito, mostrarError, mostrarAdvertencia, mostrarInfo } = useNotificacion();
   const [cajas, setCajas] = useState([]);
   const [cajaSeleccionada, setCajaSeleccionada] = useState(null);
   const [cajaAsignadaUsuario, setCajaAsignadaUsuario] = useState(null); // Caja actualmente asignada
@@ -17,6 +21,7 @@ export function CierreCaja({ user }) {
   const [loading, setLoading] = useState(false);
   const [mostrarModalAsignarCaja, setMostrarModalAsignarCaja] = useState(false);
   const [fechaInicioCaja, setFechaInicioCaja] = useState(null); // Hora cuando se asignó la caja
+  const [modalConfirmacion, setModalConfirmacion] = useState({ isOpen: false, tipo: 'warning', titulo: '', mensaje: '', onConfirm: null });
 
   // Función auxiliar para convertir a número
   const toNumber = (value) => {
@@ -119,9 +124,9 @@ export function CierreCaja({ user }) {
     } catch (error) {
       console.error('Error al cargar datos:', error);
       if (error.response?.status === 403 || error.response?.status === 401) {
-        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        mostrarError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
       } else {
-        alert('Error al cargar los datos: ' + (error.response?.data?.error || error.message));
+        mostrarError('Error al cargar los datos: ' + (error.response?.data?.error || error.message));
       }
     } finally {
       setLoading(false);
@@ -172,10 +177,10 @@ export function CierreCaja({ user }) {
         id_usuario: '',
         id_sucursal: ''
       });
-      alert('Caja creada exitosamente');
+      mostrarExito('Caja creada exitosamente');
     } catch (error) {
       console.error('Error al crear caja:', error);
-      alert('Error al crear la caja');
+      mostrarError('Error al crear la caja');
     }
   };
 
@@ -186,7 +191,7 @@ export function CierreCaja({ user }) {
 
       // Verificar que la caja no tenga usuario asignado
       if (caja.id_usuario && caja.id_usuario !== user.id_usuario) {
-        alert('Esta caja ya está asignada a otro usuario');
+        mostrarAdvertencia('Esta caja ya está asignada a otro usuario');
         return;
       }
 
@@ -220,10 +225,10 @@ export function CierreCaja({ user }) {
       // Cargar ventas pasando la fecha de inicio
       await cargarVentasDelDia(fechaApertura);
       
-      alert('Caja asignada exitosamente. Solo se contarán las ventas desde este momento.');
+      mostrarExito('Caja asignada exitosamente. Solo se contarán las ventas desde este momento.');
     } catch (error) {
       console.error('Error al asignar caja:', error);
-      alert('Error al asignar la caja. Por favor intente nuevamente.');
+      mostrarError('Error al asignar la caja. Por favor intente nuevamente.');
     }
   };
 
@@ -238,26 +243,26 @@ export function CierreCaja({ user }) {
         direccion: '',
         telefono: ''
       });
-      alert('Sucursal creada exitosamente');
+      mostrarExito('Sucursal creada exitosamente');
     } catch (error) {
       console.error('Error al crear sucursal:', error);
-      alert('Error al crear la sucursal');
+      mostrarError('Error al crear la sucursal');
     }
   };
 
   const realizarCierre = async () => {
     if (!efectivoContado) {
-      alert('Ingrese el efectivo contado');
+      mostrarAdvertencia('Ingrese el efectivo contado');
       return;
     }
 
     if (!cajaSeleccionada || !cajaAsignadaUsuario) {
-      alert('Debe tener una caja asignada para realizar el cierre');
+      mostrarAdvertencia('Debe tener una caja asignada para realizar el cierre');
       return;
     }
 
     if (cajaSeleccionada.id_caja !== cajaAsignadaUsuario.id_caja) {
-      alert('Solo puede hacer cierre de su caja asignada');
+      mostrarAdvertencia('Solo puede hacer cierre de su caja asignada');
       return;
     }
 
@@ -285,13 +290,16 @@ export function CierreCaja({ user }) {
         id_sucursal: cajaSeleccionada.id_sucursal
       });
 
-      alert('Cierre de caja realizado exitosamente. Caja liberada y guardada en la base de datos.');
+      mostrarExito('Cierre de caja realizado exitosamente. Caja liberada y guardada en la base de datos.');
       
       // Preguntar si desea imprimir/descargar el reporte
-      const imprimirCopia = window.confirm('¿Desea imprimir o descargar una copia del reporte de cierre?');
-      if (imprimirCopia) {
-        imprimirReporte();
-      }
+      setModalConfirmacion({
+        isOpen: true,
+        tipo: 'info',
+        titulo: 'Imprimir Reporte',
+        mensaje: '¿Desea imprimir o descargar una copia del reporte de cierre?',
+        onConfirm: () => imprimirReporte()
+      });
       
       // Resetear estados completamente
       setCajaAsignadaUsuario(null);
@@ -305,7 +313,7 @@ export function CierreCaja({ user }) {
       await cargarDatos();
     } catch (error) {
       console.error('Error al realizar cierre:', error);
-      alert('Error al realizar el cierre de caja');
+      mostrarError('Error al realizar el cierre de caja');
     }
   };
 
@@ -881,6 +889,27 @@ export function CierreCaja({ user }) {
           </div>
         </div>
       )}
+
+      {/* Notificaciones */}
+      {notificaciones.map(notif => (
+        <Notificacion
+          key={notif.id}
+          tipo={notif.tipo}
+          mensaje={notif.mensaje}
+          duracion={notif.duracion}
+          onClose={() => cerrarNotificacion(notif.id)}
+        />
+      ))}
+
+      {/* Modal de Confirmación */}
+      <ModalConfirmacion
+        isOpen={modalConfirmacion.isOpen}
+        onClose={() => setModalConfirmacion({ ...modalConfirmacion, isOpen: false })}
+        onConfirm={modalConfirmacion.onConfirm}
+        titulo={modalConfirmacion.titulo}
+        mensaje={modalConfirmacion.mensaje}
+        tipo={modalConfirmacion.tipo}
+      />
     </div>
   );
 }
