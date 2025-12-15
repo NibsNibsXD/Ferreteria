@@ -28,9 +28,9 @@ router.post('/', authenticateToken, authorizeRoles(1), cajaController.createCaja
 /**
  * Actualizar una caja
  * PUT /api/cajas/:id
- * Requiere autenticación y rol de administrador
+ * Requiere autenticación (empleados pueden actualizar para liberar caja en cierre)
  */
-router.put('/:id', authenticateToken, authorizeRoles(1), cajaController.updateCaja);
+router.put('/:id', authenticateToken, cajaController.updateCaja);
 
 /**
  * Obtener cierres por caja

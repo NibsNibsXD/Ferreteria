@@ -48,6 +48,18 @@ module.exports = (sequelize, DataTypes) => {
     total_neto: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: true
+    },
+    efectivo_esperado: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+    efectivo_contado: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+    diferencia: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
     }
   }, {
     sequelize,
