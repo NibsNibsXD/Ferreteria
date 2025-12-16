@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Trash2, Save } from 'lucide-react';
 import { productoService, compraService } from '../services';
+import Notificacion from './Notificacion';
+import { useNotificacion } from '../hooks/useNotificacion';
 
 export function RegistroCompras({ user }) {
+  const { notificaciones, cerrarNotificacion, mostrarExito, mostrarError, mostrarAdvertencia } = useNotificacion();
   const [items, setItems] = useState([]);
   const [productos, setProductos] = useState([]);
   const [compras, setCompras] = useState([]);
@@ -54,7 +57,7 @@ export function RegistroCompras({ user }) {
 
     const itemExistente = items.find(i => i.id_producto === producto.id_producto);
     if (itemExistente) {
-      alert('El producto ya está en la lista');
+      mostrarAdvertencia('El producto ya está en la lista');
       return;
     }
 
@@ -91,7 +94,7 @@ export function RegistroCompras({ user }) {
 
   const guardarCompra = async () => {
     if (items.length === 0) {
-      alert('Agregue productos a la compra');
+      mostrarAdvertencia('Agregue productos a la compra');
       return;
     }
 
@@ -108,13 +111,13 @@ export function RegistroCompras({ user }) {
       };
 
       await compraService.create(compraData);
-      alert(`Compra registrada exitosamente - Total: L ${calcularTotal().toFixed(2)}`);
+      mostrarExito(`Compra registrada exitosamente - Total: L ${calcularTotal().toFixed(2)}`);
       setItems([]);
       cargarProductos(); // Recargar productos para actualizar stock
       cargarCompras(); // Recargar historial de compras
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al guardar la compra: ' + (error.response?.data?.error || error.message));
+      mostrarError('Error al guardar la compra: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -326,6 +329,17 @@ export function RegistroCompras({ user }) {
           )}
         </div>
       </div>
+
+      {/* Notificaciones */}
+      {notificaciones.map(notif => (
+        <Notificacion
+          key={notif.id}
+          tipo={notif.tipo}
+          mensaje={notif.mensaje}
+          duracion={notif.duracion}
+          onClose={() => cerrarNotificacion(notif.id)}
+        />
+      ))}
     </div>
   );
 }

@@ -3,8 +3,12 @@ import { Users as UsersIcon, Plus, Edit, Trash2, Shield, X } from 'lucide-react'
 import usuarioService from '../services/usuarioService';
 import rolService from '../services/rolService';
 import sucursalService from '../services/sucursalService';
+import Notificacion from './Notificacion';
+import ModalConfirmacion from './ModalConfirmacion';
+import { useNotificacion } from '../hooks/useNotificacion';
 
 export function Usuarios() {
+  const { notificaciones, cerrarNotificacion, mostrarExito, mostrarError, mostrarAdvertencia } = useNotificacion();
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [sucursales, setSucursales] = useState([]);
@@ -12,6 +16,7 @@ export function Usuarios() {
   const [dialogAbierto, setDialogAbierto] = useState(false);
   const [usuarioEliminar, setUsuarioEliminar] = useState(null);
   const [usuarioEditar, setUsuarioEditar] = useState(null);
+  const [modalConfirmacion, setModalConfirmacion] = useState({ isOpen: false, tipo: 'danger', titulo: '', mensaje: '', onConfirm: null });
   const [formData, setFormData] = useState({
     nombre: '',
     correo: '',
@@ -46,9 +51,9 @@ export function Usuarios() {
         message: error.message
       });
       if (error.response?.status === 403 || error.response?.status === 401) {
-        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        mostrarError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
       } else {
-        alert('Error al cargar los datos: ' + (error.response?.data?.error || error.message));
+        mostrarError('Error al cargar los datos: ' + (error.response?.data?.error || error.message));
       }
     } finally {
       setLoading(false);
@@ -84,12 +89,12 @@ export function Usuarios() {
   const guardarUsuario = async () => {
     try {
       if (!formData.nombre || !formData.correo || !formData.id_rol) {
-        alert('Por favor completa todos los campos obligatorios');
+        mostrarAdvertencia('Por favor completa todos los campos obligatorios');
         return;
       }
 
       if (!usuarioEditar && !formData.contrasena) {
-        alert('La contraseña es requerida para nuevos usuarios');
+        mostrarAdvertencia('La contraseña es requerida para nuevos usuarios');
         return;
       }
 
@@ -108,10 +113,10 @@ export function Usuarios() {
 
       if (usuarioEditar) {
         await usuarioService.update(usuarioEditar.id_usuario, dataToSend);
-        alert('Usuario actualizado exitosamente');
+        mostrarExito('Usuario actualizado exitosamente');
       } else {
         await usuarioService.create(dataToSend);
-        alert('Usuario creado exitosamente');
+        mostrarExito('Usuario creado exitosamente');
       }
 
       setDialogAbierto(false);
@@ -126,19 +131,19 @@ export function Usuarios() {
       cargarDatos();
     } catch (error) {
       console.error('Error al guardar usuario:', error);
-      alert('Error al guardar usuario: ' + (error.response?.data?.error || error.message));
+      mostrarError('Error al guardar usuario: ' + (error.response?.data?.error || error.message));
     }
   };
 
   const eliminarUsuario = async () => {
     try {
       await usuarioService.delete(usuarioEliminar);
-      alert('Usuario eliminado exitosamente');
+      mostrarExito('Usuario eliminado exitosamente');
       setUsuarioEliminar(null);
       cargarDatos();
     } catch (error) {
       console.error('Error al eliminar usuario:', error);
-      alert('Error al eliminar usuario: ' + (error.response?.data?.error || error.message));
+      mostrarError('Error al eliminar usuario: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -518,6 +523,27 @@ export function Usuarios() {
           </div>
         </div>
       )}
+
+      {/* Notificaciones */}
+      {notificaciones.map(notif => (
+        <Notificacion
+          key={notif.id}
+          tipo={notif.tipo}
+          mensaje={notif.mensaje}
+          duracion={notif.duracion}
+          onClose={() => cerrarNotificacion(notif.id)}
+        />
+      ))}
+
+      {/* Modal de Confirmación */}
+      <ModalConfirmacion
+        isOpen={modalConfirmacion.isOpen}
+        onClose={() => setModalConfirmacion({ ...modalConfirmacion, isOpen: false })}
+        onConfirm={modalConfirmacion.onConfirm}
+        titulo={modalConfirmacion.titulo}
+        mensaje={modalConfirmacion.mensaje}
+        tipo={modalConfirmacion.tipo}
+      />
     </div>
   );
 }

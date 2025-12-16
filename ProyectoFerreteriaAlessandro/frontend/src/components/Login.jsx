@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { authService } from '../services/authService';
 import { Mail, ArrowLeft, Lock, CheckCircle, Wrench, Eye, EyeOff } from 'lucide-react';
+import Notificacion from './Notificacion';
+import { useNotificacion } from '../hooks/useNotificacion';
 
 export function Login({ onLogin }) {
+  const { notificaciones, cerrarNotificacion, mostrarExito, mostrarInfo, mostrarAdvertencia } = useNotificacion();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +36,7 @@ export function Login({ onLogin }) {
   const handleResetPassword = (e) => {
     e.preventDefault();
     // TODO: Implementar lógica de recuperación de contraseña con el backend
-    alert('Funcionalidad de recuperación de contraseña pendiente de implementar');
+    mostrarInfo('Funcionalidad de recuperación de contraseña pendiente de implementar');
   };
 
   const handleChangePassword = (e) => {
@@ -51,7 +54,7 @@ export function Login({ onLogin }) {
     }
 
     // TODO: Implementar cambio de contraseña con el backend
-    alert('Contraseña actualizada exitosamente');
+    mostrarExito('Contraseña actualizada exitosamente');
     setNewPassword('');
     setConfirmPassword('');
     setResetEmail('');
@@ -252,6 +255,17 @@ export function Login({ onLogin }) {
           </form>
         </div>
       </div>
+
+      {/* Notificaciones */}
+      {notificaciones.map(notif => (
+        <Notificacion
+          key={notif.id}
+          tipo={notif.tipo}
+          mensaje={notif.mensaje}
+          duracion={notif.duracion}
+          onClose={() => cerrarNotificacion(notif.id)}
+        />
+      ))}
     </div>
   );
 }

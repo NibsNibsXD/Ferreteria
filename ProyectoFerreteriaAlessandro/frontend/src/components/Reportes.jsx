@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Download, TrendingUp, Package, Users } from 'lucide-react';
+import Notificacion from './Notificacion';
+import { useNotificacion } from '../hooks/useNotificacion';
 
 export function Reportes({ user }) {
+  const { notificaciones, cerrarNotificacion, mostrarExito, mostrarError } = useNotificacion();
   const [periodo, setPeriodo] = useState('diario');
   const [activeTab, setActiveTab] = useState('ventas');
   const [loading, setLoading] = useState(true);
@@ -31,8 +34,8 @@ export function Reportes({ user }) {
       const productosData = await productosResponse.json();
       setProductos(Array.isArray(productosData.data) ? productosData.data : []);
 
-      // Cargar clientes frecuentes
-      const clientesResponse = await fetch(`${process.env.REACT_APP_API_URL}/reportes/clientes/frecuentes?limit=20`, {
+      // Cargar clientes frecuentes (sin límite)
+      const clientesResponse = await fetch(`${process.env.REACT_APP_API_URL}/reportes/clientes/frecuentes`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (clientesResponse.ok) {
@@ -79,10 +82,10 @@ export function Reportes({ user }) {
       a.href = url;
       a.download = `reporte_${activeTab}_${periodo}.xlsx`;
       a.click();
-      alert('Reporte exportado a Excel exitosamente');
+      mostrarExito('Reporte exportado a Excel exitosamente');
     } catch (error) {
       console.error('Error al exportar Excel:', error);
-      alert(`Error al exportar reporte: ${error.message}`);
+      mostrarError(`Error al exportar reporte: ${error.message}`);
     }
   };
 
@@ -110,10 +113,10 @@ export function Reportes({ user }) {
       a.href = url;
       a.download = `reporte_${activeTab}_${periodo}.pdf`;
       a.click();
-      alert('Reporte exportado a PDF exitosamente');
+      mostrarExito('Reporte exportado a PDF exitosamente');
     } catch (error) {
       console.error('Error al exportar PDF:', error);
-      alert(`Error al exportar reporte: ${error.message}`);
+      mostrarError(`Error al exportar reporte: ${error.message}`);
     }
   };
 
@@ -437,6 +440,17 @@ export function Reportes({ user }) {
           </div>
         )}
       </div>
+
+      {/* Notificaciones */}
+      {notificaciones.map(notif => (
+        <Notificacion
+          key={notif.id}
+          tipo={notif.tipo}
+          mensaje={notif.mensaje}
+          duracion={notif.duracion}
+          onClose={() => cerrarNotificacion(notif.id)}
+        />
+      ))}
     </div>
   );
 }
