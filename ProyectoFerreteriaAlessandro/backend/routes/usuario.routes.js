@@ -37,9 +37,9 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
  *                         type: string
  *                       id_rol:
  *                         type: integer
- *                       estado:
+ *                       activo:
  *                         type: boolean
- *                       fecha_creacion:
+ *                       fecha_registro:
  *                         type: string
  *                         format: date-time
  */
@@ -143,9 +143,9 @@ router.get('/:id', authenticateToken, usuarioController.getUsuarioById);
  *                       type: string
  *                     id_rol:
  *                       type: integer
- *                     estado:
+ *                     activo:
  *                       type: boolean
- *                     fecha_creacion:
+ *                     fecha_registro:
  *                       type: string
  *                       format: date-time
  */
@@ -184,7 +184,7 @@ router.post('/', authenticateToken, authorizeRoles(1), usuarioController.createU
  *                 type: string
  *               id_rol:
  *                 type: integer
- *               estado:
+ *               activo:
  *                 type: boolean
  *     responses:
  *       200:
@@ -209,9 +209,9 @@ router.post('/', authenticateToken, authorizeRoles(1), usuarioController.createU
  *                       type: string
  *                     id_rol:
  *                       type: integer
- *                     estado:
+ *                     activo:
  *                       type: boolean
- *                     fecha_creacion:
+ *                     fecha_registro:
  *                       type: string
  *                       format: date-time
  *       404:

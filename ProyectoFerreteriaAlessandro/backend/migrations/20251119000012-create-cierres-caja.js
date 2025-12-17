@@ -47,6 +47,18 @@ module.exports = {
       total_neto: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: true
+      },
+      efectivo_esperado: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
+      efectivo_contado: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
+      diferencia: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
       }
     });
   },

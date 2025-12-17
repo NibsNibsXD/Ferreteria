@@ -51,8 +51,8 @@ router.post('/register', async (req, res) => {
       contrasena: contrasenaEncriptada,
       id_rol: id_rol || 2, // Por defecto rol 2 (usuario)
       id_sucursal: id_sucursal || null,
-      estado: true,
-      fecha_creacion: new Date()
+      activo: true,
+      fecha_registro: new Date()
     });
 
 
@@ -62,8 +62,8 @@ router.post('/register', async (req, res) => {
       correo: nuevoUsuario.correo,
       id_rol: nuevoUsuario.id_rol,
       id_sucursal: nuevoUsuario.id_sucursal,
-      estado: nuevoUsuario.estado,
-      fecha_creacion: nuevoUsuario.fecha_creacion
+      activo: nuevoUsuario.activo,
+      fecha_registro: nuevoUsuario.fecha_registro
     };
 
     res.status(201).json({ 
@@ -118,7 +118,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Verificar si el usuario está activo
-    if (!usuario.estado) {
+    if (!usuario.activo) {
       return res.status(403).json({ 
         error: 'Usuario desactivado. Contacte al administrador.' 
       });
@@ -149,8 +149,8 @@ router.post('/login', async (req, res) => {
       correo: usuario.correo,
       id_rol: usuario.id_rol,
       id_sucursal: usuario.id_sucursal,
-      estado: usuario.estado,
-      fecha_creacion: usuario.fecha_creacion,
+      activo: usuario.activo,
+      fecha_registro: usuario.fecha_registro,
       rol: usuario.rol ? {
         id_rol: usuario.rol.id_rol,
         nombre: usuario.rol.nombre,
@@ -188,7 +188,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         {
           model: db.Rol,
           as: 'rol',
-          attributes: ['id_rol', 'nombre', 'descripcion']
+          attributes: ['id_rol', 'nombre', 'descripcion', 'permisos']
         },
         {
           model: db.Sucursal,

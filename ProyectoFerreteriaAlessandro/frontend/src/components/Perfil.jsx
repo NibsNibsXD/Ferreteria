@@ -29,7 +29,7 @@ const getTimeAgo = (date) => {
 export function Perfil({ user, onUpdateUser }) {
   console.log('========== COMPONENTE PERFIL RENDERIZADO ==========');
   console.log('Perfil renderizado con user:', user);
-  console.log('fecha_creacion del user:', user?.fecha_creacion);
+  console.log('fecha_registro del user:', user?.fecha_registro);
   console.log('===================================================');
   
   const [isEditingInfo, setIsEditingInfo] = useState(false);
@@ -81,7 +81,7 @@ export function Perfil({ user, onUpdateUser }) {
         correo: correo.trim(),
         id_rol: user?.id_rol || user?.rol?.id_rol,
         id_sucursal: user?.id_sucursal || user?.sucursal?.id_sucursal || null,
-        estado: user?.estado ?? true,
+        activo: user?.activo ?? true,
       };
 
       const updated = await usuarioService.update(user?.id_usuario || user?.id, payload);
@@ -400,7 +400,7 @@ export function Perfil({ user, onUpdateUser }) {
               <p>Tu contraseña está protegida y encriptada.</p>
               <p className="text-sm mt-2">
                 Última actualización:{' '}
-                {user?.fecha_creacion ? getTimeAgo(user.fecha_creacion) : 'N/D'}
+                {user?.fecha_registro ? getTimeAgo(user.fecha_registro) : 'N/D'}
               </p>
             </div>
           )}
@@ -420,21 +420,21 @@ export function Perfil({ user, onUpdateUser }) {
         <div className="p-6 space-y-3">
           <div className="flex justify-between py-2 border-b border-gray-200">
             <span className="text-gray-600">Estado de la cuenta</span>
-            <span className={user?.estado === false ? 'text-red-600' : 'text-green-600'}>
-              {user?.estado === false ? 'Inactiva' : 'Activa'}
+            <span className={user?.activo === false ? 'text-red-600' : 'text-green-600'}>
+              {user?.activo === false ? 'Inactiva' : 'Activa'}
             </span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-200">
             <span className="text-gray-600">Fecha de creación</span>
             <span className="text-gray-900">
-              {user?.fecha_creacion ? (
+              {user?.fecha_registro ? (
                 <>
-                  {new Date(user.fecha_creacion).toLocaleDateString('es-ES', {
+                  {new Date(user.fecha_registro).toLocaleDateString('es-ES', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                  })}{' '}
-                  ({getTimeAgo(user.fecha_creacion)})
+                  })}
+                  ({getTimeAgo(user.fecha_registro)})
                 </>
               ) : (
                 'N/D'

@@ -18,6 +18,20 @@ module.exports = {
         allowNull: true
       }
     });
+
+    // Insertar roles iniciales
+    await queryInterface.bulkInsert('roles', [
+      {
+        id_rol: 1,
+        nombre: 'Administrador',
+        descripcion: 'Acceso completo al sistema'
+      },
+      {
+        id_rol: 2,
+        nombre: 'Empleado',
+        descripcion: 'Rol para empleados con permisos limitados (sin reportes ni usuarios)'
+      }
+    ]);
   },
 
   async down(queryInterface, Sequelize) {
