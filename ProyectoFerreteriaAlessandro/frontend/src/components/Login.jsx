@@ -213,16 +213,7 @@ export function Login({ onLogin }) {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Contraseña</label>
-                <button
-                  type="button"
-                  className="text-sm text-[#0f4c81] hover:underline"
-                  onClick={() => setShowResetPassword(true)}
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
+              <label className="text-sm font-medium">Contraseña</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}

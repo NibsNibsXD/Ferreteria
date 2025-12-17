@@ -58,7 +58,7 @@ const createUsuario = async (data) => {
       contrasena: contrasenaEncriptada,
       id_rol,
       id_sucursal: id_sucursal || null,
-      estado: true
+      activo: true
     });
 
     const usuarioCreado = await db.Usuario.findByPk(nuevoUsuario.id_usuario, {
@@ -82,7 +82,7 @@ const updateUsuario = async (id, data) => {
       throw new Error('Usuario no encontrado');
     }
 
-    const { nombre, correo, id_rol, id_sucursal, estado } = data;
+    const { nombre, correo, id_rol, id_sucursal, activo } = data;
 
     if (correo && correo !== usuario.correo) {
       const usuarioExistente = await db.Usuario.findOne({ where: { correo } });
@@ -96,7 +96,7 @@ const updateUsuario = async (id, data) => {
       correo: correo || usuario.correo,
       id_rol: id_rol !== undefined ? id_rol : usuario.id_rol,
       id_sucursal: id_sucursal !== undefined ? id_sucursal : usuario.id_sucursal,
-      estado: estado !== undefined ? estado : usuario.estado
+      activo: activo !== undefined ? activo : usuario.activo
     });
 
     const usuarioActualizado = await db.Usuario.findByPk(id, {
@@ -120,7 +120,7 @@ const deleteUsuario = async (id) => {
       throw new Error('Usuario no encontrado');
     }
 
-    await usuario.update({ estado: false });
+    await usuario.update({ activo: false });
 
     return { mensaje: 'Usuario desactivado correctamente' };
   } catch (error) {

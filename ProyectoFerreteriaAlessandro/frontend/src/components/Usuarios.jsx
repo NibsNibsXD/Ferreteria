@@ -23,7 +23,7 @@ export function Usuarios() {
     contrasena: '',
     id_rol: '',
     id_sucursal: '',
-    estado: true
+    activo: true
   });
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export function Usuarios() {
       contrasena: '',
       id_rol: roles.length > 0 ? roles[0].id_rol : '',
       id_sucursal: sucursales.length > 0 ? sucursales[0].id_sucursal : '',
-      estado: true
+      activo: true
     });
     setDialogAbierto(true);
   };
@@ -81,7 +81,7 @@ export function Usuarios() {
       contrasena: '',
       id_rol: usuario.id_rol,
       id_sucursal: usuario.id_sucursal || '',
-      estado: usuario.estado
+      activo: usuario.activo
     });
     setDialogAbierto(true);
   };
@@ -103,7 +103,7 @@ export function Usuarios() {
         correo: formData.correo,
         id_rol: parseInt(formData.id_rol),
         id_sucursal: formData.id_sucursal ? parseInt(formData.id_sucursal) : null,
-        estado: formData.estado
+        activo: formData.activo
       };
 
       // Solo incluir contraseña si se proporcionó
@@ -126,7 +126,7 @@ export function Usuarios() {
         contrasena: '',
         id_rol: '',
         id_sucursal: '',
-        estado: true
+        activo: true
       });
       cargarDatos();
     } catch (error) {
@@ -258,16 +258,16 @@ export function Usuarios() {
                         <td className="text-center p-3">
                           <span
                             className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                              usuario.estado
+                              usuario.activo
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {usuario.estado ? 'Activo' : 'Inactivo'}
+                            {usuario.activo ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td className="p-3 text-gray-700">
-                          {new Date(usuario.fecha_creacion).toLocaleDateString('es-ES')}
+                          {new Date(usuario.fecha_registro).toLocaleDateString('es-ES')}
                         </td>
                         <td className="text-center p-3">
                           <div className="flex gap-2 justify-center">
@@ -458,13 +458,13 @@ export function Usuarios() {
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  name="estado"
-                  checked={formData.estado}
+                  name="activo"
+                  checked={formData.activo}
                   onChange={handleInputChange}
                   className="w-4 h-4 text-[#0f4c81] border-gray-300 rounded focus:ring-[#0f4c81]"
-                  id="estado-checkbox"
+                  id="activo-checkbox"
                 />
-                <label htmlFor="estado-checkbox" className="text-sm font-medium text-gray-700">
+                <label htmlFor="activo-checkbox" className="text-sm font-medium text-gray-700">
                   Usuario activo
                 </label>
               </div>

@@ -46,6 +46,14 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: true
       },
+      impuesto: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
+      total: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
       id_metodo_pago: {
         type: Sequelize.INTEGER,
         allowNull: true,

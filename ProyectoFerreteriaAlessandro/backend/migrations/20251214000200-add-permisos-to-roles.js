@@ -17,10 +17,10 @@ module.exports = {
       WHERE nombre = 'Administrador'
     `);
 
-    // Actualizar rol de Empleado con permisos limitados
+    // Actualizar rol de Empleado con permisos limitados (sin reportes ni usuarios)
     await queryInterface.sequelize.query(`
       UPDATE roles 
-      SET permisos = '["nueva-venta", "devoluciones", "cierre-caja", "productos", "registro-compras", "alertas-stock"]'::jsonb
+      SET permisos = '["nueva-venta", "devoluciones", "cierre-caja", "productos", "registro-compras", "alertas-stock", "clientes"]'::jsonb
       WHERE nombre = 'Empleado'
     `);
   },
