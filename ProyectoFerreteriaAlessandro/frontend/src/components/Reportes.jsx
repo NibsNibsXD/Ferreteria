@@ -287,7 +287,7 @@ export function Reportes({ user }) {
                         <tr key={venta.id_venta} className="border-b hover:bg-[#f7fafc] transition-colors">
                           <td className="p-3">{venta.id_venta}</td>
                           <td className="p-3">{venta.cliente?.nombre || 'N/A'}</td>
-                          <td className="p-3">{new Date(venta.fecha_venta).toLocaleDateString()}</td>
+                          <td className="p-3">{new Date(venta.fecha).toLocaleDateString()}</td>
                           <td className="text-right p-3">L {parseFloat(venta.total || 0).toFixed(2)}</td>
                           <td className="text-center p-3">
                             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200">

@@ -58,11 +58,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    estado: {
+    activo: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
-    fecha_creacion: {
+    fecha_registro: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }
