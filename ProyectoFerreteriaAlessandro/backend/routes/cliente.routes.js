@@ -20,15 +20,15 @@ router.get('/:id', authenticateToken, clienteController.getClienteById);
 /**
  * Crear un nuevo cliente
  * POST /api/clientes
- * Requiere autenticación y rol de administrador
+ * Requiere autenticación
  */
-router.post('/', authenticateToken, authorizeRoles(1), clienteController.createCliente);
+router.post('/', authenticateToken, clienteController.createCliente);
 
 /**
  * Actualizar un cliente
  * PUT /api/clientes/:id
- * Requiere autenticación y rol de administrador
+ * Requiere autenticación
  */
-router.put('/:id', authenticateToken, authorizeRoles(1), clienteController.updateCliente);
+router.put('/:id', authenticateToken, clienteController.updateCliente);
 
 module.exports = router;
